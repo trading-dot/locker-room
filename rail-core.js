@@ -104,7 +104,7 @@ export class Turntable {
   clear() { if (this.garment) { this.body.remove(this.garment); this.garment.traverse(o => { o.geometry && o.geometry.dispose(); if (o.material) { o.material.map && o.material.map.dispose(); o.material.dispose(); } }); this.garment = null; } }
   build(im, readable) {
     const T = this.T, tiles = this.mode, bk = tiles === 2 ? 1 : 2;
-    const D = (TIPE[this.tipe] || TIPE.kaos).depth, H = D * 2.3;           // setengah tebal maksimum
+    const D = (TIPE[this.tipe] || TIPE.kaos).depth, H = D * 1.3;           // setengah tebal maksimum
     const mkTex = idx => { const c = document.createElement('canvas'); c.width = c.height = 1024; const g = c.getContext('2d');
       g.drawImage(im, idx * im.naturalWidth / tiles, 0, im.naturalWidth / tiles, im.naturalHeight, 0, 0, 1024, 1024);
       const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 8; t.minFilter = T.LinearMipmapLinearFilter; return t; };
@@ -125,11 +125,19 @@ export class Turntable {
                 + Math.sin(x * .1 + yy * .012 + ph * 2) * g * 1.6
                 + Math.sin(Math.atan2(x, dy + 70) * 13 + ph) * Math.min(1, dy / 180) * (1 - g * .6) * 3.6
                 + Math.sin(x * .03 + ph) * Math.max(0, dy - 540) / 230 * 2.2;
-        pos.setZ(i, sign * (H * 1.35 * tube * chest + wob * Math.min(1, k * 1.5)));
+        pos.setZ(i, sign * (H * tube * chest + wob * .7 * Math.min(1, k * 1.5)));
       }
       if (sign < 0) { const A = geo.index.array; for (let i = 0; i < A.length; i += 3) { const t = A[i]; A[i] = A[i + 2]; A[i + 2] = t; } }
       geo.computeVertexNormals();
+      const avg = (() => { const c = document.createElement('canvas'); c.width = c.height = 32; const g = c.getContext('2d'); g.drawImage(tex.image, 0, 0, 32, 32);
+        const d = g.getImageData(0, 0, 32, 32).data; let r = 0, gg = 0, b = 0, n = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 200) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++; }
+        n = n || 1; return new T.Color(r / n / 255, gg / n / 255, b / n / 255).convertSRGBToLinear(); })();
       const mat = new T.MeshStandardMaterial({ map: tex, alphaMap: null, transparent: false, alphaTest: .5, roughness: .82, metalness: 0, side: T.DoubleSide });
+      mat.onBeforeCompile = sh => {
+        sh.uniforms.uAvg = { value: avg };
+        sh.vertexShader = 'varying float vSide;\n' + sh.vertexShader.replace('#include <beginnormal_vertex>', '#include <beginnormal_vertex>\n vSide = abs(normalize(objectNormal).z);');
+        sh.fragmentShader = 'varying float vSide; uniform vec3 uAvg;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n diffuseColor.rgb = mix(uAvg * 0.85, diffuseColor.rgb, smoothstep(0.35, 0.8, vSide));');
+      };
       const mesh = new T.Mesh(geo, mat); group.add(mesh);
       // pastikan potongan alpha (map.a) dipakai: alphaTest dengan map alpha aktif di three r128 lewat map
     });
