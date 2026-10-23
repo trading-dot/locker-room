@@ -12,7 +12,6 @@ Tempel di `firestore.rules` toko utama, di dalam `match /documents { ... }` deka
     }
 
 ## Format gambar (atlas)
-PNG transparan **2400×800 px** = 4 kotak **600×800** berurutan kiri→kanan:
-`DEPAN | KANAN | BELAKANG | KIRI`. Tanpa gantungan, tanpa background, barang di tengah, sisakan margin ≥20px.
-Satu file per warna. Pakai `templates/template-kaos|hoodie|aksesoris.png` sebagai panduan (sembunyikan layer panduan saat export).
-Kaos/hoodie: ujung atas kerah di sekitar y=60 agar pas di gantungan. Aksesoris: taruh di area tengah (±400×400).
+PNG transparan **3200×800 px** = 4 kotak persegi **800×800** berurutan kiri→kanan:
+`DEPAN | KANAN | BELAKANG | KIRI`. Tanpa gantungan, tanpa background, barang di tengah, sisakan margin ≥20px; bagian atas barang di sekitar y=50 agar pas di gantungan.
+Satu file per warna. Jenis: `kaos` (lengan pendek), `kaos-panjang`, `hoodie`, `aksesoris`. Mockup hitam/putih siap pakai ada di `mockups/` (nama `mockup-<jenis>-<hitam|putih>.png`). Pakai `templates/template-kaos|kaos-panjang|hoodie|aksesoris.png` sebagai panduan (sembunyikan layer panduan saat export).

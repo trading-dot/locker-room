@@ -6,16 +6,16 @@
 <title>FVCKTHERULES — Rail</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
 <style>
-:root{--bg:#ececea;--ink:#111;--acc:#39ff14;--W:min(58vw,320px)}
+:root{--bg:#ececea;--ink:#111;--acc:#39ff14;--W:min(74vw,400px)}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:700 11px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.05em;text-transform:uppercase;user-select:none}
 .brand{position:fixed;top:calc(14px + env(safe-area-inset-top));left:16px;font-weight:800;z-index:5}
 .count{position:fixed;top:calc(14px + env(safe-area-inset-top));right:16px;opacity:.5;z-index:5}
 .stage{position:fixed;inset:0 0 calc(34px + env(safe-area-inset-bottom)) 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;padding-top:env(safe-area-inset-top)}
-.rail{position:relative;width:100%;height:calc(var(--W)*1.333 + 56px);flex:none}
+.rail{position:relative;width:100%;height:calc(var(--W)*.82 + 56px);flex:none}
 .rod{position:absolute;left:0;right:0;top:0;height:2px;background:#8d8d8a}
 .item{position:absolute;left:50%;top:0;width:var(--W);transform-origin:50% 0;transition:transform .55s cubic-bezier(.2,.8,.2,1),filter .55s,opacity .55s;cursor:pointer}
-.tt{position:relative;margin-top:40px;aspect-ratio:3/4;width:100%}
+.tt{position:relative;margin-top:40px;aspect-ratio:1/1;width:100%}
 .tt-h{position:absolute;left:50%;top:-40px;width:42%;aspect-ratio:200/120;transform:translateX(-50%);z-index:0}
 .tt-h svg{display:block;width:100%;height:100%}
 .tt-stack{position:absolute;inset:0;z-index:1;transform-origin:50% 0;pointer-events:none}
@@ -37,7 +37,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .ticker div{white-space:nowrap;animation:mq 28s linear infinite;font-size:10px}
 @keyframes mq{to{transform:translateX(-50%)}}
 .hint{opacity:.4;font-size:10px}
-@media (max-height:700px){:root{--W:min(46vw,250px)}}
+@media (max-height:700px){:root{--W:min(56vw,300px)}}
 @media (prefers-reduced-motion:reduce){.ticker div{animation:none}.item{transition:none}}
 </style>
 </head>
@@ -57,7 +57,7 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 <div class="ticker"><div id="mq"></div></div>
 
 <script type="module">
-import { Turntable, demoAtlas } from './rail-core.js';
+import { Turntable, mockupUrl } from './rail-core.js';
 // ===== PENGATURAN =====
 const MAIN = 'https://fucktherules.my.id';
 const FB_URL = MAIN + '/firebase.js?v=20261030';
@@ -120,9 +120,9 @@ addEventListener('pointerup', e => { if (sx == null) return; const d = e.clientX
 addEventListener('resize', () => go(cur));
 
 // ---- contoh dulu (kalau belum ada yang diatur di admin / Firestore gagal) ----
-const DEMO = [['#2b2b2b', 'kaos'], ['#d9d3c4', 'hoodie'], ['#9fb6cf', 'kaos']].map(([c, t], i) =>
-  ({ pid: 'demo' + i, nama: 'Contoh ' + t + ' ' + (i + 1), harga: 'Rp 189.000', tipe: t, scale: 1, y: 0,
-     warna: [{ nama: 'A', hex: c, atlas: demoAtlas(c, t) }, { nama: 'B', hex: '#e9d34a', atlas: demoAtlas('#e9d34a', t) }] }));
+const DEMO = [['kaos', 'Kaos lengan pendek'], ['kaos-panjang', 'Kaos lengan panjang'], ['hoodie', 'Hoodie'], ['aksesoris', 'Tote bag']].map(([t, n], i) =>
+  ({ pid: 'demo' + i, nama: n + ' (contoh)', harga: 'Rp 189.000', tipe: t, scale: 1, y: 0,
+     warna: [{ nama: 'Hitam', hex: '#111111', atlas: mockupUrl(t, 'hitam') }, { nama: 'Putih', hex: '#f2f2f0', atlas: mockupUrl(t, 'putih') }] }));
 build(DEMO);
 
 try {

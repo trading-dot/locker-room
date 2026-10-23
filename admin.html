@@ -12,9 +12,9 @@ button{cursor:pointer}button.pri{background:#111;color:#fff;border-color:#111}bu
 .list button{display:block;width:100%;text-align:left;margin-bottom:6px}.list button.on{border-color:#111;background:#eef}
 .grid{display:grid;grid-template-columns:1fr 300px;gap:12px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
 .warna{border:1px dashed #bbb;border-radius:10px;padding:8px;margin:8px 0}.warna img{height:44px;background:#ddd;border-radius:6px}
-.prev{position:relative;height:420px;overflow:hidden;background:#ececea;border-radius:10px;display:flex;justify-content:center}
+.prev{position:relative;height:400px;overflow:hidden;background:#ececea;border-radius:10px;display:flex;justify-content:center}
 .prev .rod{position:absolute;left:0;right:0;top:20px;height:2px;background:#999}
-.prev .tt{position:relative;width:240px;aspect-ratio:3/4;margin-top:60px}
+.prev .tt{position:relative;width:300px;aspect-ratio:1/1;margin-top:60px}
 .tt-h{position:absolute;left:50%;top:-40px;width:42%;aspect-ratio:200/120;transform:translateX(-50%)}.tt-h svg{display:block;width:100%;height:100%}
 .tt-stack{position:absolute;inset:0;z-index:1;transform-origin:50% 0;pointer-events:none}
 .tt-v{position:absolute;inset:0;background-repeat:no-repeat}
@@ -49,13 +49,14 @@ small{color:#666}code,pre{background:#eee;border-radius:6px;padding:2px 5px;font
     <div class="row" style="justify-content:center"><button data-r="-90">↺</button><button data-a="0">Depan</button><button data-a="90">Kanan</button><button data-a="180">Belakang</button><button data-a="270">Kiri</button><button data-r="90">↻</button></div>
     <div class="row" id="pvsw" style="justify-content:center"></div></div>
   <div class="card"><h2>Format gambar</h2>
-    <small>1 file PNG transparan <b>2400×800</b> = 4 kotak 600×800: <b>DEPAN · KANAN · BELAKANG · KIRI</b>. Tanpa gantungan &amp; tanpa background.</small>
-    <div class="row"><a href="templates/template-kaos.png" download>Template kaos</a><a href="templates/template-hoodie.png" download>Hoodie</a><a href="templates/template-aksesoris.png" download>Aksesoris</a></div>
+    <small>1 file PNG transparan <b>3200×800</b> = 4 kotak persegi 800×800: <b>DEPAN · KANAN · BELAKANG · KIRI</b>. Tanpa gantungan &amp; tanpa background.</small>
+    <div class="row"><a href="templates/template-kaos.png" download>Kaos pendek</a><a href="templates/template-kaos-panjang.png" download>Kaos panjang</a><a href="templates/template-hoodie.png" download>Hoodie</a><a href="templates/template-aksesoris.png" download>Aksesoris</a></div>
+    <small>Mockup hitam/putih siap pakai ada di folder <code>mockups/</code> (bisa jadi dasar desain, atau langsung dipakai lewat tombol "Mockup" di tiap warna).</small>
     <small>Atau isi 4 foto terpisah di tiap warna, admin menggabungkannya otomatis.</small></div>
 </div></div></div>
 
 <script type="module">
-import { Turntable, TIPE } from './rail-core.js';
+import { Turntable, TIPE, mockupUrl } from './rail-core.js';
 const MAIN = 'https://fucktherules.my.id', FB = MAIN + '/firebase.js?v=20261030';
 const FS = 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js', AU = 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
 const $ = s => document.querySelector(s), msg = (t, bad) => { $('#msg').innerHTML = `<div class="card" style="border-color:${bad ? '#b3261e' : '#2a7'}">${t}</div>`; setTimeout(() => $('#msg').innerHTML = '', 5000); };
@@ -100,22 +101,23 @@ function renderWarna() {
     const d = document.createElement('div'); d.className = 'warna';
     d.innerHTML = `<div class="row"><input class="grow" value="${w.nama || ''}" placeholder="nama warna"><input type="color" value="${w.hex || '#222222'}">
       ${w.atlas ? `<img src="${w.atlas}">` : '<small>belum ada gambar</small>'}<button class="del">✕</button></div>
-      <div class="row"><label>Atlas jadi: <input type="file" accept="image/png,image/webp"></label><small class="st"></small></div>
+      <div class="row"><label>Atlas jadi: <input type="file" accept="image/png,image/webp"></label><button class="mk" data-c="hitam">Mockup hitam</button><button class="mk" data-c="putih">Mockup putih</button><small class="st"></small></div>
       <details><summary><small>…atau gabung dari 4 foto terpisah</small></summary><div class="row">
       ${['Depan', 'Kanan', 'Belakang', 'Kiri'].map(n => `<label>${n} <input type="file" accept="image/*" data-v></label>`).join('')}<button class="gab">Gabung &amp; upload</button></div></details>`;
     const [nm, hx] = d.querySelectorAll('input:not([type=file])');
     nm.oninput = () => w.nama = nm.value; hx.oninput = () => { w.hex = hx.value; drawSw(); };
+    d.querySelectorAll('.mk').forEach(b => b.onclick = () => { w.atlas = mockupUrl(cur.tipe, b.dataset.c); w.hex = b.dataset.c === 'hitam' ? '#111111' : '#f2f2f0'; if (!w.nama || /^Warna/.test(w.nama)) w.nama = b.dataset.c === 'hitam' ? 'Hitam' : 'Putih'; renderWarna(); show(k); });
     d.querySelector('.del').onclick = () => { cur.warna.splice(k, 1); renderWarna(); };
     const st = d.querySelector('.st'), upload = async f => { st.textContent = 'mengunggah…'; const u = await fb.uploadGambar(f, 'produk'); if (!u) { st.textContent = 'gagal upload'; return; } w.atlas = u; renderWarna(); show(k); };
     d.querySelector('input[type=file]').onchange = async e => {
       const f = e.target.files[0]; if (!f) return; const im = await bmp(f);
-      if (Math.abs(im.width / im.height - 3) > .02) { st.textContent = `Ukuran ${im.width}×${im.height} — harus rasio 3:1 (mis. 2400×800)`; return; }
+      if (Math.abs(im.width / im.height - 4) > .03) { st.textContent = `Ukuran ${im.width}×${im.height} — harus rasio 4:1 (mis. 3200×800)`; return; }
       upload(f);
     };
     d.querySelector('.gab').onclick = async () => {
       const fl = [...d.querySelectorAll('[data-v]')].map(i => i.files[0]); if (fl.some(x => !x)) { st.textContent = 'Isi keempat gambar'; return; }
-      const c = document.createElement('canvas'); c.width = 2400; c.height = 800; const g = c.getContext('2d');
-      for (let i = 0; i < 4; i++) { const im = await bmp(fl[i]), r = Math.min(600 / im.width, 800 / im.height); g.drawImage(im, i * 600 + (600 - im.width * r) / 2, (800 - im.height * r) / 2, im.width * r, im.height * r); }
+      const c = document.createElement('canvas'); c.width = 3200; c.height = 800; const g = c.getContext('2d');
+      for (let i = 0; i < 4; i++) { const im = await bmp(fl[i]), r = Math.min(800 / im.width, 800 / im.height); g.drawImage(im, i * 800 + (800 - im.width * r) / 2, (800 - im.height * r) / 2, im.width * r, im.height * r); }
       c.toBlob(b => upload(new File([b], 'atlas.png', { type: 'image/png' })), 'image/png');
     };
     d.onclick = () => show(k); box.appendChild(d);

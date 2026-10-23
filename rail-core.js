@@ -1,13 +1,14 @@
 // rail-core.js — dipakai index.html (tampilan toko) dan admin.html (preview).
-// ATLAS = 1 gambar PNG transparan 2400x800: 4 kotak 600x800 berurutan KIRI→KANAN:
+// ATLAS = 1 gambar PNG transparan 3200x800: 4 kotak 800x800 berurutan KIRI→KANAN:
 //   [0] DEPAN  [1] KANAN  [2] BELAKANG  [3] KIRI   (urutan putar searah jarum jam dilihat dari atas)
-export const TILE_W = 600, TILE_H = 800, VIEWS = ['depan', 'kanan', 'belakang', 'kiri'];
+export const TILE_W = 800, TILE_H = 800, VIEWS = ['depan', 'kanan', 'belakang', 'kiri'];
 
 // Jenis barang: menentukan skala bawaan, geser vertikal (% tinggi), dan model gantungan.
 export const TIPE = {
-  kaos:      { label: 'Kaos',                       scale: 1,    y: 0, hanger: 'hanger' },
+  'kaos':         { label: 'Kaos lengan pendek',         scale: 1,    y: 0, hanger: 'hanger' },
+  'kaos-panjang': { label: 'Kaos lengan panjang',        scale: 1,    y: 0, hanger: 'hanger' },
   hoodie:    { label: 'Hoodie / Jaket',             scale: 1.04, y: 0, hanger: 'hanger' },
-  aksesoris: { label: 'Aksesoris (topi/tas/dll)',   scale: 0.8,  y: 8, hanger: 'hook'   },
+  aksesoris: { label: 'Aksesoris (tas/topi/dll)',   scale: 0.8,  y: 8, hanger: 'hook'   },
 };
 
 const HANGER = '<svg viewBox="0 -30 200 120" preserveAspectRatio="xMidYMax meet"><path transform="translate(0,-18)" d="M100 4a12 12 0 1 1 12 12c-8 0-12 4-12 12v24" fill="none" stroke="#6b4a2f" stroke-width="5" stroke-linecap="round"/><path d="M100 34 8 84h184z" fill="none" stroke="#8a6040" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/></svg>';
@@ -78,3 +79,6 @@ export function demoAtlas(hex = '#2b2b2b', tipe = 'kaos') {
   }
   return c.toDataURL('image/png');
 }
+
+// Mockup bawaan (hitam/putih) untuk tiap jenis — folder mockups/ di repo yang sama.
+export const mockupUrl = (tipe, warna) => new URL(`mockups/mockup-${tipe}-${warna}.png`, import.meta.url).href;
