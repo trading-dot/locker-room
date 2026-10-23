@@ -11,6 +11,13 @@ export const TIPE = {
   aksesoris: { label: 'Aksesoris (tas/topi/dll)',   scale: 0.8,  y: 8, hanger: 'hook',   depth: 40 },
 };
 
+// Peta potongan kit (lembar 1200x1400): [sx,sy,w,h, dx,dy, muka(0=depan,1=belakang)] → dirakit jadi 2 kotak 800x800.
+const KIT = {"kaos":[[404,0,393,497,195,43,0],[20,0,131,434,64,104,0],[1049,0,131,438,588,100,0],[404,517,393,497,195,43,1],[20,454,131,434,64,104,1],[1049,458,131,438,588,100,1]],"kaos-panjang":[[391,0,418,578,190,43,0],[20,0,139,487,51,147,0],[1040,0,140,490,608,144,0],[391,598,418,578,190,43,1],[20,507,139,487,51,147,1],[1040,510,140,490,608,144,1]],"hoodie":[[391,0,418,644,190,41,0],[20,0,139,486,51,211,0],[1040,0,140,490,608,208,0],[391,664,418,644,190,41,1],[20,506,139,486,51,211,1],[1040,510,140,490,608,208,1]],"aksesoris":[[416,0,369,575,216,43,0],[416,595,369,575,216,43,1]]};
+function kitAssemble(im, tipe) {
+  const L = KIT[tipe] || KIT.kaos, k = im.naturalWidth / 1200, c = document.createElement('canvas'); c.width = 1600; c.height = 800;
+  const g = c.getContext('2d'); L.forEach(([sx, sy, w, h, dx, dy, f]) => g.drawImage(im, sx * k, sy * k, w * k, h * k, dx + f * 800, dy, w, h));
+  c.naturalWidth = 1600; c.naturalHeight = 800; return c;
+}
 
 // ======================= 3D SUNGGUHAN (Three.js) =======================
 // Baju = mesh berisi (depan + belakang digembungkan dari siluet PNG), diberi cahaya, bayangan, dan gantungan 3D.
@@ -106,7 +113,7 @@ export class Turntable {
       this.atlas = atlas; this.clear();
       if (atlas) {
         const load = cors => { const im = new Image(); if (cors) im.crossOrigin = 'anonymous';
-          im.onload = () => { if (this.atlas !== atlas) return; this.mode = im.naturalWidth / im.naturalHeight < 3 ? 2 : 4; this.build(im, cors); };
+          im.onload = () => { if (this.atlas !== atlas) return; const r = im.naturalWidth / im.naturalHeight, kit = r < 1.5; this.mode = kit || r < 3 ? 2 : 4; this.build(kit ? kitAssemble(im, this.tipe) : im, cors); };
           im.onerror = () => { if (cors) load(false); };
           im.src = atlas; };
         load(true);
@@ -130,8 +137,8 @@ export class Turntable {
       if (sign < 0) for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));      // sisi belakang dilihat dari belakang → cermin
       let mx = 1; for (let i = 0; i < F.S.length; i++) if (F.S[i] > mx) mx = F.S[i];
       for (let i = 0; i < pos.count; i++) {
-        const u = uv.getX(i), v = 1 - uv.getY(i), d = sample(F, u, v), Rl = Math.max(1, sample(F, u, v, F.R)), k = Math.min(1, d / Rl);
-        const tube = Math.sqrt(Math.max(0, 1 - (1 - k) * (1 - k))) * Rl * 3.125 * CZ;      // elips: badan lebar, lengan kecil, hem terbuka
+        const u = uv.getX(i), v = 1 - uv.getY(i), d = sample(F, u, v), Rl = Math.max(1, sample(F, u, v, F.R)), k = Math.min(1, d / (Rl * .42));
+        const tube = Math.sqrt(Math.max(0, 1 - (1 - k) * (1 - k))) * Math.min(Rl, 60) * 2.4 * CZ;   // panel depan/belakang rata, hanya tepi yang membulat (bukan lensa/daun)      // elips: badan lebar, lengan kecil, hem terbuka
         const x = pos.getX(i), yy = pos.getY(i), ph = sign < 0 ? 2.1 : 0, dy = Math.max(0, 350 - yy), g = Math.min(1, dy / 750);
         const wob = Math.sin(x * .04 + Math.sin(yy * .01 + ph) * 1.4 + ph) * (.3 + g) * 3.4
                 + Math.sin(x * .1 + yy * .012 + ph * 2) * g * 1.6
@@ -217,3 +224,6 @@ export const mockupUrl = (tipe, warna) => new URL(`mockups/mockup-${tipe}-${warn
 
 // Lembar pola 2 kotak (DEPAN | BELAKANG, 1600x800) — sisi samping dibentuk otomatis oleh 3D.
 export const polaUrl = (tipe, warna) => new URL(`pola/pola-${tipe}-${warna}.png`, import.meta.url).href;
+
+// Lembar KIT (1200x1400, gaya template DLS/FTS): potongan lengan + depan + belakang dalam satu lembar.
+export const kitUrl = (tipe, warna) => new URL(`kit/kit-${tipe}-${warna}.png`, import.meta.url).href;
