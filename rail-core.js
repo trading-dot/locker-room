@@ -11,127 +11,158 @@ export const TIPE = {
   aksesoris: { label: 'Aksesoris (tas/topi/dll)',   scale: 0.8,  y: 8, hanger: 'hook',   depth: 40 },
 };
 
-const HANGER = '<svg viewBox="0 -30 200 120" preserveAspectRatio="xMidYMax meet"><path transform="translate(0,-18)" d="M100 4a12 12 0 1 1 12 12c-8 0-12 4-12 12v24" fill="none" stroke="#6b4a2f" stroke-width="5" stroke-linecap="round"/><path d="M100 34 8 84h184z" fill="none" stroke="#8a6040" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/></svg>';
-const HOOK   = '<svg viewBox="0 -30 200 120" preserveAspectRatio="xMidYMax meet"><path transform="translate(0,-18)" d="M100 4a12 12 0 1 1 12 12c-8 0-12 4-12 12v50" fill="none" stroke="#6b4a2f" stroke-width="5" stroke-linecap="round"/></svg>';
 
-// ---- CSS 3D turntable: baju = tumpukan lapisan tipis (ada ketebalan) + 4 bidang sisi dari atlas ----
-const CSS = `
-.tt{perspective:calc(var(--s,.5)*3000px);perspective-origin:50% 25%}
-.tt-rot,.tt-stack{position:absolute;inset:0;transform-style:preserve-3d;transform-origin:50% 0;pointer-events:none}
-.tt-h,.tt-hs{position:absolute;left:50%;top:-40px;width:42%;aspect-ratio:200/120;transform-origin:50% 0}
-.tt-h{transform:translateX(-50%)}
-.tt-hs{transform:translateX(-50%) rotateY(90deg)}
-.tt-h svg,.tt-hs svg{display:block;width:100%;height:100%;overflow:visible}
-.tt-l{position:absolute;inset:0;background-repeat:no-repeat;background-size:400% 100%;backface-visibility:hidden;-webkit-backface-visibility:hidden}
-.tt-l.fr{transform:translateZ(calc(var(--z)*var(--s,.5)*1px))}
-.tt-l.bk{transform:translateZ(calc(var(--z)*var(--s,.5)*1px)) rotateY(180deg)}
-.tt-l.sr{transform:rotateY(-90deg)}
-.tt-l.sl{transform:rotateY(90deg)}
-.tt-l.in{filter:brightness(.8)}
-`;
-let cssDone = false;
-const injectCSS = () => { if (cssDone) return; cssDone = true; const s = document.createElement('style'); s.textContent = CSS; document.head.appendChild(s); };
-const HOOK_SIDE = '<svg viewBox="0 -30 200 120" preserveAspectRatio="xMidYMax meet"><path transform="translate(0,-18)" d="M100 4a12 12 0 1 1 12 12c-8 0-12 4-12 12v24" fill="none" stroke="#6b4a2f" stroke-width="5" stroke-linecap="round"/><path d="M100 34v50" stroke="#8a6040" stroke-width="6" stroke-linecap="round"/></svg>';
+// ======================= 3D SUNGGUHAN (Three.js) =======================
+// Baju = mesh berisi (depan + belakang digembungkan dari siluet PNG), diberi cahaya, bayangan, dan gantungan 3D.
+const THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+let threeP = null;
+const loadThree = () => threeP || (threeP = new Promise((res, rej) => {
+  if (window.THREE) return res(window.THREE);
+  const s = document.createElement('script'); s.src = THREE_URL; s.onload = () => res(window.THREE); s.onerror = rej; document.head.appendChild(s);
+}));
 const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
-const SLICES = 5;                                              // lapisan per sisi (ketebalan)
+const GRID = 110;                                   // resolusi mesh
+
+// Peta alpha 256x256 + jarak ke tepi (chamfer) -> tinggi gembung
+function buildField(im, tileIdx, tiles) {
+  const N = 256, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d');
+  g.drawImage(im, tileIdx * im.naturalWidth / tiles, 0, im.naturalWidth / tiles, im.naturalHeight, 0, 0, N, N);
+  let a = new Uint8Array(N * N);
+  try { const d = g.getImageData(0, 0, N, N).data; for (let i = 0; i < N * N; i++) a[i] = d[i * 4 + 3] > 40 ? 1 : 0; }
+  catch (e) { for (let y = 40; y < 230; y++) for (let x = 60; x < 196; x++) a[y * N + x] = 1; }
+  const D = new Float32Array(N * N).fill(1e4);
+  for (let i = 0; i < N * N; i++) if (a[i]) { const x = i % N, y = i / N | 0; if (x === 0 || y === 0 || x === N - 1 || y === N - 1 || !a[i - 1] || !a[i + 1] || !a[i - N] || !a[i + N]) D[i] = 0; }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const i = y * N + x; if (!a[i]) { D[i] = 0; continue; }
+    if (x > 0) D[i] = Math.min(D[i], D[i - 1] + 1); if (y > 0) D[i] = Math.min(D[i], D[i - N] + 1);
+    if (x > 0 && y > 0) D[i] = Math.min(D[i], D[i - N - 1] + 1.41); if (x < N - 1 && y > 0) D[i] = Math.min(D[i], D[i - N + 1] + 1.41); }
+  for (let y = N - 1; y >= 0; y--) for (let x = N - 1; x >= 0; x--) { const i = y * N + x; if (!a[i]) continue;
+    if (x < N - 1) D[i] = Math.min(D[i], D[i + 1] + 1); if (y < N - 1) D[i] = Math.min(D[i], D[i + N] + 1);
+    if (x < N - 1 && y < N - 1) D[i] = Math.min(D[i], D[i + N + 1] + 1.41); if (x > 0 && y < N - 1) D[i] = Math.min(D[i], D[i + N - 1] + 1.41); }
+  // haluskan sedikit
+  const S = new Float32Array(N * N);
+  for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) { const i = y * N + x; S[i] = (D[i] * 4 + D[i - 1] + D[i + 1] + D[i - N] + D[i + N]) / 8; }
+  return { N, S };
+}
+const sample = (F, u, v) => { const x = Math.min(F.N - 1, Math.max(0, u * (F.N - 1))), y = Math.min(F.N - 1, Math.max(0, v * (F.N - 1)));
+  const x0 = x | 0, y0 = y | 0, x1 = Math.min(F.N - 1, x0 + 1), y1 = Math.min(F.N - 1, y0 + 1), fx = x - x0, fy = y - y0, S = F.S, N = F.N;
+  return (S[y0 * N + x0] * (1 - fx) + S[y0 * N + x1] * fx) * (1 - fy) + (S[y1 * N + x0] * (1 - fx) + S[y1 * N + x1] * fx) * fy; };
+
+let SHARED = null;
+function sharedRenderer(T) {
+  if (SHARED) return SHARED;
+  const r = new T.WebGLRenderer({ alpha: true, antialias: true, premultipliedAlpha: true });
+  r.setClearColor(0, 0); r.outputEncoding = T.sRGBEncoding; SHARED = r; return r;
+}
 
 export class Turntable {
   constructor(host, o = {}) {
-    injectCSS();
     this.host = host; host.classList.add('tt');
-    host.innerHTML = '<div class="tt-rot"><div class="tt-h"></div><div class="tt-hs"></div><div class="tt-stack"></div></div>';
-    this.rot = host.querySelector('.tt-rot'); this.h = host.querySelector('.tt-h'); this.hs = host.querySelector('.tt-hs'); this.stack = host.querySelector('.tt-stack');
-    this.mode = 4; this.angle = 0; this.target = 0; this.raf = 0; this.sc = 1; this.y = 0; this.tipe = 'kaos'; this.dragEnabled = true;
-    this.layers = []; this.slices = []; this.sides = [];
-    const add = (cls, tile, z, extra) => { const el = document.createElement('div'); el.className = 'tt-l ' + cls + (extra ? ' ' + extra : ''); el.dataset.v = tile; if (z != null) el.style.setProperty('--z', z); this.stack.appendChild(el); this.layers.push(el); return el; };
-    // urutan DOM: belakang → depan (browser tetap mengurutkan per kedalaman 3D)
-    add('bk', 'b', -100);                                          // bidang BELAKANG
-    for (let i = SLICES; i >= 1; i--) this.slices.push(add('bk', 'b', -100 * (1 - i / (SLICES + 1)), 'in'));
-    for (let i = 1; i <= SLICES; i++) this.slices.push(add('fr', 'f', 100 * (1 - i / (SLICES + 1)), 'in'));
-    add('fr', 'f', 100);                                           // bidang DEPAN
-    this.sides = [add('sr', 'r'), add('sl', 'l')];                   // KANAN, KIRI (muncul saat tampak samping)
-    this.faces = [this.layers[0], this.layers[this.layers.length - 3]];
+    host.style.position = host.style.position || 'relative';
+    this.mode = 2; this.angle = 0; this.target = 0; this.raf = 0; this.sc = 1; this.y = 0; this.tipe = 'kaos'; this.dragEnabled = true;
+    this.ready = false; this._pend = o; this._tex = null;
+    this.canvas = document.createElement('canvas'); this.canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
+    this.ctx = this.canvas.getContext('2d');
+    host.innerHTML = ''; host.appendChild(this.canvas);
+    loadThree().then(T => { this.T = T; this.init(); this.set(this._pend); }).catch(e => console.warn('three gagal', e));
     if (typeof ResizeObserver !== 'undefined') new ResizeObserver(() => this.measure()).observe(host);
-    this.set(o); this.measure();
   }
-  measure() { const w = this.host.clientWidth || 400; this.host.style.setProperty('--s', w / TILE_W); this.fit(); }
-  fit() {                                                       // ketebalan tergantung jenis barang
-    const d = (TIPE[this.tipe] || TIPE.kaos).depth;
-    this.layers.forEach(el => { if (el.dataset.z0 == null) el.dataset.z0 = el.style.getPropertyValue('--z'); const z0 = +el.dataset.z0; if (el.style.getPropertyValue('--z') !== '') el.style.setProperty('--z', z0 / 100 * d); });
+  init() {
+    const T = this.T;
+    this.renderer = sharedRenderer(T);
+    this.scene = new T.Scene();
+    this.cam = new T.PerspectiveCamera(22, 1, 10, 6000);
+    this.cam.position.set(0, 0, 2400); this.cam.lookAt(0, 0, 0);
+    // cahaya studio: lembut + arah utama + pantulan bawah
+    this.scene.add(new T.HemisphereLight(0xffffff, 0xb9b3a8, .95));
+    const key = new T.DirectionalLight(0xffffff, .8); key.position.set(-500, 700, 900); this.scene.add(key);
+    const rim = new T.DirectionalLight(0xffffff, .35); rim.position.set(600, 200, -700); this.scene.add(rim);
+    this.pivot = new T.Group(); this.scene.add(this.pivot);            // berputar (Y) pada titik gantungan
+    this.body = new T.Group(); this.pivot.add(this.body);
+    this.hang = new T.Group(); this.pivot.add(this.hang);
+    this.measure();
   }
+  measure() { if (!this.renderer) return; const dpr = Math.min(devicePixelRatio || 1, 2), w = Math.round((this.host.clientWidth || 400) * dpr), h = Math.round((this.host.clientHeight || this.host.clientWidth || 400) * dpr);
+    this.W = w; this.H = h; if (this.canvas.width !== w || this.canvas.height !== h) { this.canvas.width = w; this.canvas.height = h; }
+    this.cam.aspect = w / h; this.cam.updateProjectionMatrix(); this.draw(); }
   set({ tipe, scale, y, atlas } = {}) {
-    if (tipe != null) { this.tipe = tipe; const hk = (TIPE[tipe] || TIPE.kaos).hanger === 'hook'; this.h.innerHTML = hk ? HOOK : HANGER; this.hs.innerHTML = HOOK_SIDE; this.fit(); }
+    if (tipe != null) this.tipe = tipe;
     if (scale != null) this.sc = +scale;
     if (y != null) this.y = +y;
+    if (!this.T) { this._pend = { tipe: this.tipe, scale: this.sc, y: this.y, atlas: atlas !== undefined ? atlas : this._pend.atlas }; return; }
     if (atlas !== undefined) {
-      this.atlas = atlas; this.mode = 4; this.sideUrl = null; this.apply();
+      this.atlas = atlas; this.clear();
       if (atlas) {
         const load = cors => { const im = new Image(); if (cors) im.crossOrigin = 'anonymous';
-          im.onload = () => { if (this.atlas !== atlas) return; this.mode = im.naturalWidth / im.naturalHeight < 3 ? 2 : 4; this.apply(); if (this.mode === 2) this.buildSide(im, cors); this.draw(); };
+          im.onload = () => { if (this.atlas !== atlas) return; this.mode = im.naturalWidth / im.naturalHeight < 3 ? 2 : 4; this.build(im, cors); };
           im.onerror = () => { if (cors) load(false); };
           im.src = atlas; };
         load(true);
       }
-    }
+    } else if (this.garment) this.layout();
     this.draw();
   }
-  buildSide(im, readable) {                                     // pola 2 kotak tidak punya gambar samping → buat jalur samping dari siluet + warna baju
-    const D = (TIPE[this.tipe] || TIPE.kaos).depth, w = Math.round(D * 2), c = document.createElement('canvas'); c.width = c.height = 800;
-    const g = c.getContext('2d'); let ok = false;
-    if (readable) try {
-      const t = document.createElement('canvas'); t.width = 1600; t.height = 800; const tg = t.getContext('2d'); tg.drawImage(im, 0, 0, 1600, 800);
-      const d = tg.getImageData(0, 0, 1600, 800).data;
-      for (let y = 0; y < 800; y++) {
-        let r = 0, gg = 0, b = 0, n = 0, any = false;
-        for (let x = 0; x < 1600; x++) { const i = (y * 1600 + x) * 4; if (d[i + 3] > 40) { any = true; if (x < 800) { r += d[i]; gg += d[i + 1]; b += d[i + 2]; n++; } } }
-        if (!any) continue; if (!n) { r = gg = b = 90; n = 1; }
-        g.fillStyle = `rgb(${r / n * .82 | 0},${gg / n * .82 | 0},${b / n * .82 | 0})`; g.fillRect(400 - w / 2, y, w, 1);
+  clear() { if (this.garment) { this.body.remove(this.garment); this.garment.traverse(o => { o.geometry && o.geometry.dispose(); if (o.material) { o.material.map && o.material.map.dispose(); o.material.dispose(); } }); this.garment = null; } }
+  build(im, readable) {
+    const T = this.T, tiles = this.mode, bk = tiles === 2 ? 1 : 2;
+    const D = (TIPE[this.tipe] || TIPE.kaos).depth, H = D * 1.9;           // setengah tebal maksimum
+    const mkTex = idx => { const c = document.createElement('canvas'); c.width = c.height = 1024; const g = c.getContext('2d');
+      g.drawImage(im, idx * im.naturalWidth / tiles, 0, im.naturalWidth / tiles, im.naturalHeight, 0, 0, 1024, 1024);
+      const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 8; t.minFilter = T.LinearMipmapLinearFilter; return t; };
+    const group = new T.Group();
+    const faces = [{ idx: 0, sign: 1 }, { idx: bk, sign: -1 }];
+    faces.forEach(({ idx, sign }) => {
+      let F; try { F = buildField(im, idx, tiles); } catch (e) { F = buildField(im, idx, tiles); }
+      const tex = mkTex(idx), alpha = tex;
+      const geo = new T.PlaneGeometry(800, 800, GRID, GRID); const pos = geo.attributes.position, uv = geo.attributes.uv;
+      if (sign < 0) for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));      // sisi belakang dilihat dari belakang → cermin
+      let mx = 1; for (let i = 0; i < F.S.length; i++) if (F.S[i] > mx) mx = F.S[i];
+      for (let i = 0; i < pos.count; i++) {
+        const u = uv.getX(i), v = 1 - uv.getY(i), d = sample(F, u, v), k = Math.min(1, d / 26);
+        const body = Math.sqrt(k) * (0.78 + 0.22 * Math.min(1, d / (mx * .8)));
+        const x = pos.getX(i), yy = pos.getY(i), wob = Math.sin(yy * .021 + x * .013) * 2.2 + Math.sin(x * .034 - yy * .017) * 1.4;
+        pos.setZ(i, sign * (H * body + wob * k));
       }
-      ok = true;
-    } catch (e) {}
-    if (!ok) { g.fillStyle = '#4a4a4a'; g.fillRect(400 - w / 2, 40, w, 680); }
-    g.globalCompositeOperation = 'source-atop';
-    const gr = g.createLinearGradient(400 - w / 2, 0, 400 + w / 2, 0); gr.addColorStop(0, 'rgba(0,0,0,.28)'); gr.addColorStop(.5, 'rgba(0,0,0,0)'); gr.addColorStop(1, 'rgba(0,0,0,.28)');
-    g.fillStyle = gr; g.fillRect(0, 0, 800, 800);
-    this.sideUrl = c.toDataURL('image/png'); this.apply();
+      if (sign < 0) { const A = geo.index.array; for (let i = 0; i < A.length; i += 3) { const t = A[i]; A[i] = A[i + 2]; A[i + 2] = t; } }
+      geo.computeVertexNormals();
+      const mat = new T.MeshStandardMaterial({ map: tex, alphaMap: null, transparent: false, alphaTest: .5, roughness: .93, metalness: 0, side: T.FrontSide });
+      const mesh = new T.Mesh(geo, mat); group.add(mesh);
+      // pastikan potongan alpha (map.a) dipakai: alphaTest dengan map alpha aktif di three r128 lewat map
+    });
+    this.garment = group; this.body.add(group); this.layout(); this.buildHanger(); this.draw();
   }
-  apply() {                                                     // 4 kotak (DEPAN|KANAN|BELAKANG|KIRI) atau lembar pola 2 kotak (DEPAN|BELAKANG)
-    const m = this.mode, idx = m === 2 ? { f: 0, b: 1 } : { f: 0, r: 1, b: 2, l: 3 };
-    for (const el of this.layers) {
-      el.style.backgroundImage = this.atlas ? `url("${this.atlas}")` : 'none'; el.style.backgroundSize = m * 100 + '% 100%';
-      el.style.backgroundPosition = `${(idx[el.dataset.v] ?? 0) * 100 / (m - 1)}% 0`;
-      if (m === 2 && (el.dataset.v === 'r' || el.dataset.v === 'l')) { el.style.backgroundImage = this.sideUrl ? `url("${this.sideUrl}")` : 'none'; el.style.backgroundSize = '100% 100%'; el.style.backgroundPosition = '0 0'; }
-    }
-    this._so = undefined;
+  buildHanger() {
+    const T = this.T; while (this.hang.children.length) this.hang.remove(this.hang.children[0]);
+    const hook = (TIPE[this.tipe] || TIPE.kaos).hanger === 'hook';
+    const wood = new T.MeshStandardMaterial({ color: 0x8a6040, roughness: .55, metalness: .05 }), metal = new T.MeshStandardMaterial({ color: 0x777777, roughness: .35, metalness: .9 });
+    const tube = (pts, r, m) => { const c = new T.CatmullRomCurve3(pts.map(p => new T.Vector3(...p))); return new T.Mesh(new T.TubeGeometry(c, 40, r, 10, false), m); };
+    const top = 330;                                                       // ujung atas baju (unit lokal)
+    this.hang.add(tube([[0, top + 120, 0], [0, top + 90, 0], [14, top + 76, 0], [10, top + 56, 0], [0, top + 44, 0], [0, top + 20, 0]], 3.2, metal));
+    if (!hook) { this.hang.add(tube([[-330, top - 140, 0], [-170, top - 55, 0], [0, top + 14, 0], [170, top - 55, 0], [330, top - 140, 0]], 6.5, wood)); }
+  }
+  layout() {
+    const t = TIPE[this.tipe] || TIPE.kaos, s = this.sc * t.scale;
+    // titik gantung di (0, top); semua berputar mengelilingi sumbu vertikal tengah
+    this.pivot.position.set(0, 0, 0);
+    this.body.scale.setScalar(s); this.body.position.y = -(this.y + t.y) / 100 * 800;
+    this.hang.scale.setScalar(s); this.hang.position.y = this.body.position.y;
   }
   draw() {
-    const t = TIPE[this.tipe] || TIPE.kaos;
-    this.stack.style.transform = `translateY(${this.y + t.y}%) scale(${this.sc * t.scale})`;
-    const a = ((this.angle % 360) + 360) % 360;
-    this.rot.style.transform = `rotateY(${a}deg)`;
-    const s = Math.abs(Math.sin(a * Math.PI / 180)), so = clamp((s - .86) / .14, 0, 1), m2 = this.mode === 2;   // tampak samping → pakai gambar KANAN/KIRI asli
-    if (so !== this._so) {
-      this._so = so;
-      [...this.slices, ...this.faces].forEach(el => { el.style.opacity = m2 ? 1 : 1 - so; el.style.visibility = !m2 && so >= 1 ? 'hidden' : 'visible'; });
-      this.sides.forEach(el => { el.style.opacity = so; el.style.visibility = so <= 0 ? 'hidden' : 'visible'; });
-    }
+    if (!this.renderer) return;
+    const a = ((this.angle % 360) + 360) % 360; this.pivot.rotation.y = a * Math.PI / 180;
+    const r = this.renderer; r.setSize(this.W, this.H, false); r.render(this.scene, this.cam);
+    this.ctx.clearRect(0, 0, this.W, this.H); this.ctx.drawImage(r.domElement, 0, 0);
   }
   get view() { return VIEWS[Math.round((((this.angle % 360) + 360) % 360) / 90) % 4]; }
-  rotateTo(deg, ms = 800) {                                     // jalur terpendek, easing halus berbasis waktu
+  rotateTo(deg, ms = 800) {
     const from = this.angle, d = ((deg - from) % 360 + 540) % 360 - 180, to = from + d; this.target = to;
     cancelAnimationFrame(this.raf);
     if (!d || matchMedia('(prefers-reduced-motion:reduce)').matches) { this.angle = to; this.draw(); this.onturn && this.onturn(this); return; }
     const t0 = performance.now();
-    const step = now => {
-      const k = Math.min(1, (now - t0) / ms); this.angle = from + d * ease(k);
-      this.draw(); this.onturn && this.onturn(this);
-      if (k < 1) this.raf = requestAnimationFrame(step);
-    };
+    const step = now => { const k = Math.min(1, (now - t0) / ms); this.angle = from + d * ease(k); this.draw(); this.onturn && this.onturn(this); if (k < 1) this.raf = requestAnimationFrame(step); };
     this.raf = requestAnimationFrame(step);
   }
   rotateBy(d) { this.rotateTo(Math.round(this.target / 90) * 90 + d, 650); }
-  enableDrag(el = this.host) {                                  // geser kiri/kanan = putar bebas, lepas → berhenti di sisi terdekat
+  enableDrag(el = this.host) {
     let x0 = null, a0 = 0;
     el.style.touchAction = 'pan-y'; el.style.cursor = 'grab';
     el.addEventListener('pointerdown', e => { if (!this.dragEnabled) return; x0 = e.clientX; a0 = this.angle; cancelAnimationFrame(this.raf); el.setPointerCapture(e.pointerId); });
