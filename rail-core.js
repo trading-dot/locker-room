@@ -21,7 +21,7 @@ const loadThree = () => threeP || (threeP = new Promise((res, rej) => {
   const s = document.createElement('script'); s.src = THREE_URL; s.onload = () => res(window.THREE); s.onerror = rej; document.head.appendChild(s);
 }));
 const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-const GRID = 110;                                   // resolusi mesh
+const GRID = 170;                                   // resolusi mesh
 
 // Peta alpha 256x256 + jarak ke tepi (chamfer) -> tinggi gembung
 function buildField(im, tileIdx, tiles) {
@@ -73,8 +73,8 @@ export class Turntable {
     this.cam = new T.PerspectiveCamera(22, 1, 10, 6000);
     this.cam.position.set(0, 0, 2400); this.cam.lookAt(0, 0, 0);
     // cahaya studio: lembut + arah utama + pantulan bawah
-    this.scene.add(new T.HemisphereLight(0xffffff, 0xb9b3a8, .95));
-    const key = new T.DirectionalLight(0xffffff, .8); key.position.set(-500, 700, 900); this.scene.add(key);
+    this.scene.add(new T.HemisphereLight(0xffffff, 0xb9b3a8, .75));
+    const key = new T.DirectionalLight(0xffffff, 1.15); key.position.set(-700, 600, 700); this.scene.add(key);
     const rim = new T.DirectionalLight(0xffffff, .35); rim.position.set(600, 200, -700); this.scene.add(rim);
     this.pivot = new T.Group(); this.scene.add(this.pivot);            // berputar (Y) pada titik gantungan
     this.body = new T.Group(); this.pivot.add(this.body);
@@ -119,12 +119,20 @@ export class Turntable {
       for (let i = 0; i < pos.count; i++) {
         const u = uv.getX(i), v = 1 - uv.getY(i), d = sample(F, u, v), k = Math.min(1, d / 26);
         const body = Math.sqrt(k) * (0.78 + 0.22 * Math.min(1, d / (mx * .8)));
-        const x = pos.getX(i), yy = pos.getY(i), wob = Math.sin(yy * .021 + x * .013) * 2.2 + Math.sin(x * .034 - yy * .017) * 1.4;
+        const x = pos.getX(i), yy = pos.getY(i), ph = sign < 0 ? 2.1 : 0, dy = Math.max(0, 350 - yy), g = Math.min(1, dy / 750);
+        const th = Math.atan2(x, dy + 70);
+        let wob = Math.sin(x * .045 + Math.sin(yy * .011 + ph) * 1.6 + ph) * (.25 + g) * 8              // lipatan vertikal kain menggantung
+                + Math.sin(x * .11 + yy * .013 + ph * 2) * g * 4                                       // lipatan kecil
+                + Math.sin(th * 15 + ph) * Math.min(1, dy / 180) * (1 - g * .6) * 9                   // tarikan dari titik gantungan (bahu)
+                + Math.sin(x * .032 + ph) * Math.max(0, dy - 520) / 230 * 6                           // ujung bawah bergelombang
+                + (Math.abs(x) > 140 && yy > 120 ? Math.sin(x * .07 + yy * .05 + ph) * 5 : 0)          // kerutan lengan
+                + Math.sin(yy * .05 + x * .02 + ph) * Math.exp(-dy / 90) * 6;                           // kerut kerah/bahu
+        wob *= (1 + .5 * Math.abs(Math.sin(x * .017 + ph)));
         pos.setZ(i, sign * (H * body + wob * k));
       }
       if (sign < 0) { const A = geo.index.array; for (let i = 0; i < A.length; i += 3) { const t = A[i]; A[i] = A[i + 2]; A[i + 2] = t; } }
       geo.computeVertexNormals();
-      const mat = new T.MeshStandardMaterial({ map: tex, alphaMap: null, transparent: false, alphaTest: .5, roughness: .93, metalness: 0, side: T.FrontSide });
+      const mat = new T.MeshStandardMaterial({ map: tex, alphaMap: null, transparent: false, alphaTest: .5, roughness: .82, metalness: 0, side: T.FrontSide });
       const mesh = new T.Mesh(geo, mat); group.add(mesh);
       // pastikan potongan alpha (map.a) dipakai: alphaTest dengan map alpha aktif di three r128 lewat map
     });
