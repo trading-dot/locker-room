@@ -23,28 +23,41 @@ const loadThree = () => threeP || (threeP = new Promise((res, rej) => {
 const ease = k => k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
 const GRID = 170;                                   // resolusi mesh
 
-// Peta alpha 256x256 + jarak ke tepi (chamfer) -> tinggi gembung
-function buildField(im, tileIdx, tiles) {
-  const N = 256, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d');
-  g.drawImage(im, tileIdx * im.naturalWidth / tiles, 0, im.naturalWidth / tiles, im.naturalHeight, 0, 0, N, N);
-  let a = new Uint8Array(N * N);
-  try { const d = g.getImageData(0, 0, N, N).data; for (let i = 0; i < N * N; i++) a[i] = d[i * 4 + 3] > 40 ? 1 : 0; }
-  catch (e) { for (let y = 40; y < 230; y++) for (let x = 60; x < 196; x++) a[y * N + x] = 1; }
-  const D = new Float32Array(N * N).fill(1e4);
-  for (let i = 0; i < N * N; i++) if (a[i]) { const x = i % N, y = i / N | 0; if (x === 0 || y === 0 || x === N - 1 || y === N - 1 || !a[i - 1] || !a[i + 1] || !a[i - N] || !a[i + N]) D[i] = 0; }
-  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const i = y * N + x; if (!a[i]) { D[i] = 0; continue; }
+// Peta alpha 256x256 → jarak ke tepi (d) + radius lokal (Rl). Bagian bawah (hem) dibiarkan terbuka seperti baju sungguhan.
+function chamfer(m, N, M) {
+  const D = new Float32Array(N * M).fill(1e4);
+  for (let i = 0; i < N * M; i++) if (m[i]) { const x = i % N, y = i / N | 0; if (x === 0 || x === N - 1 || y === 0 || !m[i - 1] || !m[i + 1] || !m[i - N] || (y < M - 1 && !m[i + N])) D[i] = 0; } else D[i] = 0;
+  for (let y = 0; y < M; y++) for (let x = 0; x < N; x++) { const i = y * N + x; if (!m[i]) continue;
     if (x > 0) D[i] = Math.min(D[i], D[i - 1] + 1); if (y > 0) D[i] = Math.min(D[i], D[i - N] + 1);
     if (x > 0 && y > 0) D[i] = Math.min(D[i], D[i - N - 1] + 1.41); if (x < N - 1 && y > 0) D[i] = Math.min(D[i], D[i - N + 1] + 1.41); }
-  for (let y = N - 1; y >= 0; y--) for (let x = N - 1; x >= 0; x--) { const i = y * N + x; if (!a[i]) continue;
-    if (x < N - 1) D[i] = Math.min(D[i], D[i + 1] + 1); if (y < N - 1) D[i] = Math.min(D[i], D[i + N] + 1);
-    if (x < N - 1 && y < N - 1) D[i] = Math.min(D[i], D[i + N + 1] + 1.41); if (x > 0 && y < N - 1) D[i] = Math.min(D[i], D[i + N - 1] + 1.41); }
-  // haluskan sedikit
-  const S = new Float32Array(N * N);
-  for (let y = 1; y < N - 1; y++) for (let x = 1; x < N - 1; x++) { const i = y * N + x; S[i] = (D[i] * 4 + D[i - 1] + D[i + 1] + D[i - N] + D[i + N]) / 8; }
-  return { N, S };
+  for (let y = M - 1; y >= 0; y--) for (let x = N - 1; x >= 0; x--) { const i = y * N + x; if (!m[i]) continue;
+    if (x < N - 1) D[i] = Math.min(D[i], D[i + 1] + 1); if (y < M - 1) D[i] = Math.min(D[i], D[i + N] + 1);
+    if (x < N - 1 && y < M - 1) D[i] = Math.min(D[i], D[i + N + 1] + 1.41); if (x > 0 && y < M - 1) D[i] = Math.min(D[i], D[i + N - 1] + 1.41); }
+  return D;
 }
-const sample = (F, u, v) => { const x = Math.min(F.N - 1, Math.max(0, u * (F.N - 1))), y = Math.min(F.N - 1, Math.max(0, v * (F.N - 1)));
-  const x0 = x | 0, y0 = y | 0, x1 = Math.min(F.N - 1, x0 + 1), y1 = Math.min(F.N - 1, y0 + 1), fx = x - x0, fy = y - y0, S = F.S, N = F.N;
+function maxFilter(S, N, r) { const T = new Float32Array(N * N), O = new Float32Array(N * N);
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let m = 0; for (let k = Math.max(0, x - r); k <= Math.min(N - 1, x + r); k++) m = Math.max(m, S[y * N + k]); T[y * N + x] = m; }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let m = 0; for (let k = Math.max(0, y - r); k <= Math.min(N - 1, y + r); k++) m = Math.max(m, T[k * N + x]); O[y * N + x] = m; }
+  return O; }
+function boxBlur(S, N, r, passes) { let A = S; for (let p = 0; p < passes; p++) { const T = new Float32Array(N * N), O = new Float32Array(N * N);
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let s = 0, n = 0; for (let k = Math.max(0, x - r); k <= Math.min(N - 1, x + r); k++) { s += A[y * N + k]; n++; } T[y * N + x] = s / n; }
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { let s = 0, n = 0; for (let k = Math.max(0, y - r); k <= Math.min(N - 1, y + r); k++) { s += T[k * N + x]; n++; } O[y * N + x] = s / n; }
+    A = O; } return A; }
+function buildField(im, tileIdx, tiles) {
+  const N = 256, PADR = 80, c = document.createElement('canvas'); c.width = c.height = N; const g = c.getContext('2d');
+  g.drawImage(im, tileIdx * im.naturalWidth / tiles, 0, im.naturalWidth / tiles, im.naturalHeight, 0, 0, N, N);
+  const a = new Uint8Array(N * N);
+  try { const d = g.getImageData(0, 0, N, N).data; for (let i = 0; i < N * N; i++) a[i] = d[i * 4 + 3] > 40 ? 1 : 0; }
+  catch (e) { for (let y = 40; y < 230; y++) for (let x = 60; x < 196; x++) a[y * N + x] = 1; }
+  let b = 0; for (let y = N - 1; y >= 0 && !b; y--) for (let x = 0; x < N; x++) if (a[y * N + x]) { b = y; break; }
+  const M = N + PADR, m = new Uint8Array(N * M); m.set(a);
+  for (let y = b + 1; y < M; y++) for (let x = 0; x < N; x++) m[y * N + x] = a[Math.max(0, b - 3) * N + x];   // perpanjang hem ke bawah → tidak membulat
+  const Dp = chamfer(m, N, M), D = Dp.subarray(0, N * N);
+  const Rl = boxBlur(maxFilter(D, N, 22), N, 6, 3);
+  return { N, S: boxBlur(D, N, 1, 1), R: Rl };
+}
+const sample = (F, u, v, A = F.S) => { const x = Math.min(F.N - 1, Math.max(0, u * (F.N - 1))), y = Math.min(F.N - 1, Math.max(0, v * (F.N - 1)));
+  const x0 = x | 0, y0 = y | 0, x1 = Math.min(F.N - 1, x0 + 1), y1 = Math.min(F.N - 1, y0 + 1), fx = x - x0, fy = y - y0, S = A, N = F.N;
   return (S[y0 * N + x0] * (1 - fx) + S[y0 * N + x1] * fx) * (1 - fy) + (S[y1 * N + x0] * (1 - fx) + S[y1 * N + x1] * fx) * fy; };
 
 let SHARED = null;
@@ -104,7 +117,7 @@ export class Turntable {
   clear() { if (this.garment) { this.body.remove(this.garment); this.garment.traverse(o => { o.geometry && o.geometry.dispose(); if (o.material) { o.material.map && o.material.map.dispose(); o.material.dispose(); } }); this.garment = null; } }
   build(im, readable) {
     const T = this.T, tiles = this.mode, bk = tiles === 2 ? 1 : 2;
-    const D = (TIPE[this.tipe] || TIPE.kaos).depth, H = D * 1.3;           // setengah tebal maksimum
+    const D = (TIPE[this.tipe] || TIPE.kaos).depth, CZ = D / 92;           // setengah tebal maksimum
     const mkTex = idx => { const c = document.createElement('canvas'); c.width = c.height = 1024; const g = c.getContext('2d');
       g.drawImage(im, idx * im.naturalWidth / tiles, 0, im.naturalWidth / tiles, im.naturalHeight, 0, 0, 1024, 1024);
       const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 8; t.minFilter = T.LinearMipmapLinearFilter; return t; };
@@ -117,15 +130,13 @@ export class Turntable {
       if (sign < 0) for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));      // sisi belakang dilihat dari belakang → cermin
       let mx = 1; for (let i = 0; i < F.S.length; i++) if (F.S[i] > mx) mx = F.S[i];
       for (let i = 0; i < pos.count; i++) {
-        const u = uv.getX(i), v = 1 - uv.getY(i), d = sample(F, u, v), k = Math.min(1, d / 40);
-        const tube = Math.sqrt(Math.max(0, 1 - (1 - k) * (1 - k)));                     // penampang bulat → baju terisi badan (ghost manekin)
+        const u = uv.getX(i), v = 1 - uv.getY(i), d = sample(F, u, v), Rl = Math.max(1, sample(F, u, v, F.R)), k = Math.min(1, d / Rl);
+        const tube = Math.sqrt(Math.max(0, 1 - (1 - k) * (1 - k))) * Rl * 3.125 * CZ;      // elips: badan lebar, lengan kecil, hem terbuka
         const x = pos.getX(i), yy = pos.getY(i), ph = sign < 0 ? 2.1 : 0, dy = Math.max(0, 350 - yy), g = Math.min(1, dy / 750);
-        const chest = 1 + .16 * Math.exp(-Math.pow((yy - 120) / 190, 2)) - .1 * g;      // dada lebih penuh, pinggang sedikit mengecil
-        let wob = Math.sin(x * .04 + Math.sin(yy * .01 + ph) * 1.4 + ph) * (.3 + g) * 3.4
+        const wob = Math.sin(x * .04 + Math.sin(yy * .01 + ph) * 1.4 + ph) * (.3 + g) * 3.4
                 + Math.sin(x * .1 + yy * .012 + ph * 2) * g * 1.6
-                + Math.sin(Math.atan2(x, dy + 70) * 13 + ph) * Math.min(1, dy / 180) * (1 - g * .6) * 3.6
-                + Math.sin(x * .03 + ph) * Math.max(0, dy - 540) / 230 * 2.2;
-        pos.setZ(i, sign * (H * tube * chest + wob * .7 * Math.min(1, k * 1.5)));
+                + Math.sin(Math.atan2(x, dy + 70) * 13 + ph) * Math.min(1, dy / 180) * (1 - g * .6) * 3.6;
+        pos.setZ(i, sign * (tube * (1 - .1 * g) + wob * .7 * Math.min(1, k * 1.5)));
       }
       if (sign < 0) { const A = geo.index.array; for (let i = 0; i < A.length; i += 3) { const t = A[i]; A[i] = A[i + 2]; A[i + 2] = t; } }
       geo.computeVertexNormals();
