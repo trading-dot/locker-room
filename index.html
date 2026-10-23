@@ -9,19 +9,26 @@
 :root{--bg:#ececea;--ink:#111;--acc:#39ff14;--W:min(74vw,400px)}
 *{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:700 11px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.05em;text-transform:uppercase;user-select:none}
-.brand{position:fixed;top:calc(14px + env(safe-area-inset-top));left:16px;font-weight:800;z-index:5}
-.count{position:fixed;top:calc(14px + env(safe-area-inset-top));right:16px;opacity:.5;z-index:5}
+.brand{position:fixed;top:calc(14px + env(safe-area-inset-top));left:16px;font-weight:800;z-index:30}
+.count{position:fixed;top:calc(14px + env(safe-area-inset-top));right:16px;opacity:.5;z-index:30}
 .stage{position:fixed;inset:0 0 calc(34px + env(safe-area-inset-bottom)) 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;padding-top:env(safe-area-inset-top)}
-.rail{position:relative;width:100%;height:calc(var(--W)*.82 + 56px);flex:none}
-.rod{position:absolute;left:0;right:0;top:0;height:2px;background:#8d8d8a}
-.item{position:absolute;left:50%;top:0;width:var(--W);transform-origin:50% 0;transition:transform .55s cubic-bezier(.2,.8,.2,1),filter .55s,opacity .55s;cursor:pointer}
-.tt{position:relative;margin-top:40px;aspect-ratio:1/1;width:100%}
-.tt-h{position:absolute;left:50%;top:-40px;width:42%;aspect-ratio:200/120;transform:translateX(-50%);z-index:0}
-.tt-h svg{display:block;width:100%;height:100%}
-.tt-stack{position:absolute;inset:0;z-index:1;transform-origin:50% 0;pointer-events:none}
-.tt-v{position:absolute;inset:0;background-repeat:no-repeat;filter:drop-shadow(0 14px 14px rgba(0,0,0,.12))}
-.info{text-align:center;display:flex;flex-direction:column;align-items:center;gap:9px;max-width:92vw}
+.rail{position:relative;width:100%;height:calc(var(--W)*.9 + 56px);flex:none;overflow:hidden}
+.rod{position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(#b9b9b5,#85857f);box-shadow:0 2px 3px #0002;z-index:0}
+.item{position:absolute;left:50%;top:0;width:var(--W);transform-origin:50% 0;pointer-events:none;
+  transition:transform .8s cubic-bezier(.2,.8,.2,1),filter .8s,opacity .8s}
+.item .tt{position:relative;margin-top:40px;aspect-ratio:1/1;width:100%}
+.item.sel{filter:drop-shadow(0 16px 14px rgba(0,0,0,.14))}
+.hit{position:absolute;top:0;height:100%;left:50%;cursor:pointer;transition:transform .8s cubic-bezier(.2,.8,.2,1),width .8s;touch-action:pan-y}
+.hit.sel{cursor:grab}
+.tags{position:absolute;left:calc(50% + var(--W)*.42);top:70px;width:46px;height:90px;opacity:0;pointer-events:none}
+.tg{position:absolute;top:0;width:20px;height:34px;transform-origin:50% -26px;border-radius:2px;font-size:5px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:3px;letter-spacing:0;animation:sw 3.4s ease-in-out infinite}
+.tg::before{content:"";position:absolute;left:50%;top:-26px;width:1px;height:26px;background:#555}
+.tg.a{left:2px;background:#161616;color:#fff;--r:-5deg}
+.tg.b{left:20px;top:6px;background:#c9b79c;color:#222;--r:4deg;animation-delay:-1.2s}
+@keyframes sw{0%,100%{transform:rotate(calc(var(--r) - 4deg))}50%{transform:rotate(calc(var(--r) + 4deg))}}
+.info{text-align:center;display:flex;flex-direction:column;align-items:center;gap:9px;max-width:92vw;min-height:150px}
 .info h1{font-size:13px;font-weight:800}.price{opacity:.55}
+.so{transition:opacity .5s,visibility .5s}.info.off .so{opacity:0;visibility:hidden}
 .pill{display:flex;border:1px solid var(--ink);border-radius:99px;overflow:hidden}
 .pill button,.btn{font:inherit;letter-spacing:inherit;text-transform:inherit;background:none;border:0;color:var(--ink);padding:7px 14px;cursor:pointer}
 .pill button.on{background:var(--ink);color:var(--bg)}
@@ -31,14 +38,14 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 .sw.on{outline:2px solid var(--ink)}
 .btn{border:1px solid var(--ink);border-radius:99px;text-decoration:none;display:inline-block}
 .btn:hover{background:var(--ink);color:var(--bg)}
-.nav{position:fixed;top:38%;font-size:22px;background:none;border:0;padding:14px;cursor:pointer;color:var(--ink);opacity:.45;z-index:5}
+.nav{position:fixed;top:36%;font-size:22px;background:none;border:0;padding:14px;cursor:pointer;color:var(--ink);opacity:.45;z-index:30}
 .nav.l{left:2px}.nav.r{right:2px}
 .ticker{position:fixed;left:0;right:0;bottom:0;height:calc(34px + env(safe-area-inset-bottom));background:var(--acc);overflow:hidden;display:flex;align-items:center;padding-bottom:env(safe-area-inset-bottom)}
 .ticker div{white-space:nowrap;animation:mq 28s linear infinite;font-size:10px}
 @keyframes mq{to{transform:translateX(-50%)}}
 .hint{opacity:.4;font-size:10px}
 @media (max-height:700px){:root{--W:min(56vw,300px)}}
-@media (prefers-reduced-motion:reduce){.ticker div{animation:none}.item{transition:none}}
+@media (prefers-reduced-motion:reduce){.ticker div{animation:none}.item,.hit{transition:none}.tg{animation:none}}
 </style>
 </head>
 <body>
@@ -46,18 +53,18 @@ html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font
 <button class="nav l" id="prev" aria-label="Sebelumnya">←</button><button class="nav r" id="next" aria-label="Berikutnya">→</button>
 <div class="stage">
   <div class="rail" id="rail"><div class="rod"></div></div>
-  <div class="info">
-    <h1 id="name">Memuat…</h1><div class="price" id="price"></div>
-    <div class="pill" id="pill"><button data-a="0" class="on">Depan</button><button data-a="180">Belakang</button></div>
-    <div class="row"><button class="btn rot" id="rl" aria-label="Putar kiri">↺</button><div class="row" id="sws"></div><button class="btn rot" id="rr" aria-label="Putar kanan">↻</button></div>
-    <a class="btn" id="go" target="_blank" rel="noopener">Lihat ketersediaan ↗</a>
-    <div class="hint">geser baju untuk memutar 360°</div>
+  <div class="info off" id="info">
+    <h1 id="name" class="so">Memuat…</h1><div class="price so" id="price"></div>
+    <div class="pill so" id="pill"><button data-a="0" class="on">Depan</button><button data-a="180">Belakang</button></div>
+    <div class="row so"><button class="btn rot" id="rl" aria-label="Putar kiri">↺</button><div class="row" id="sws"></div><button class="btn rot" id="rr" aria-label="Putar kanan">↻</button></div>
+    <a class="btn so" id="go" target="_blank" rel="noopener">Lihat ketersediaan ↗</a>
+    <div class="hint">ketuk baju untuk melihat</div>
   </div>
 </div>
 <div class="ticker"><div id="mq"></div></div>
 
 <script type="module">
-import { Turntable, mockupUrl } from './rail-core.js';
+import { Turntable, polaUrl as mockupUrl } from './rail-core.js';
 // ===== PENGATURAN =====
 const MAIN = 'https://fucktherules.my.id';
 const FB_URL = MAIN + '/firebase.js?v=20261030';
@@ -66,57 +73,80 @@ const TICKER = 'NEW DROPS • JAKARTA • FVCKTHERULES • PRE-ORDER OPEN • ';
 
 const $ = s => document.querySelector(s), rail = $('#rail');
 $('#mq').textContent = TICKER.repeat(12);
-let items = [], cur = 0;                       // items: {p, tt, el, ci}
+let items = [], cur = -1;                      // cur = -1 → semua baju tampak samping, berjejer di gantungan
 
 const link = p => p.pid && !String(p.pid).startsWith('demo') ? `${MAIN}/#${p.pid}` : MAIN;
+const Wpx = () => innerHeight < 700 ? Math.min(innerWidth * .56, 300) : Math.min(innerWidth * .74, 400);
+const hang = n => `<div class="tg a">FVCK</div><div class="tg b">${n}</div>`;
 
 function build(list) {
-  rail.querySelectorAll('.item').forEach(e => e.remove());
+  rail.querySelectorAll('.item,.hit').forEach(e => e.remove());
   items = list.map((p, i) => {
     const el = document.createElement('div'); el.className = 'item';
     const host = document.createElement('div'); el.appendChild(host);
+    const tags = document.createElement('div'); tags.className = 'tags'; tags.innerHTML = hang('NEW'); el.appendChild(tags);
+    const hit = document.createElement('div'); hit.className = 'hit';
     const tt = new Turntable(host, { tipe: p.tipe, scale: p.scale, y: p.y, atlas: p.warna[0].atlas });
-    tt.onturn = () => { if (items[cur]?.tt === tt) syncPill(); };
-    el.onclick = e => { if (i !== cur) go(i); };
-    rail.appendChild(el); return { p, tt, el, ci: 0 };
+    tt.angle = tt.target = 90; tt.draw(); tt.enableDrag(hit); tt.dragEnabled = false;
+    const upd = () => { const a = tt.angle * Math.PI / 180; tags.style.opacity = Math.max(0, 1 - Math.abs(Math.sin(a)) * 1.8); if (items[cur]?.tt === tt) syncPill(); };
+    tt.onturn = upd; upd();
+    hit.onclick = () => { if (i !== cur) go(i); };
+    rail.append(el, hit); return { p, tt, el, hit, ci: 0 };
   });
   cur = Math.min(cur, items.length - 1); go(cur);
 }
 function go(i) {
   if (!items.length) return;
-  cur = (i + items.length) % items.length;
-  const gap = Math.min(innerWidth * .36, 250);
+  cur = i < 0 ? -1 : (i + items.length) % items.length;
+  const W = Wpx(), n = items.length, gw = W * .8, st = W * .12, ks = .62, rs = Math.max(st * 1.15, Math.min(W * .2, (innerWidth - 40) / n));
+  document.documentElement.style.setProperty('--W', W + 'px');
   items.forEach((it, k) => {
-    const o = k - cur, a = Math.abs(o), c = !a;
-    it.el.style.transform = `translateX(calc(-50% + ${o * gap}px)) scale(${c ? 1 : .6})`;
-    it.el.style.filter = c ? 'none' : `blur(${Math.min(a * 2 + 3, 9)}px)`;
-    it.el.style.opacity = a > 2 ? 0 : c ? 1 : .8; it.el.style.zIndex = 10 - a; it.el.style.pointerEvents = a > 2 ? 'none' : 'auto';
-    if (!c) { it.tt.rotateTo(0); }
-    if (c && !it.drag) { it.tt.enableDrag(); it.drag = true; }
+    const c = k === cur, o = k - cur, a = Math.abs(o);
+    let x, sc, ang = null;
+    if (cur < 0) { x = (k - (n - 1) / 2) * rs; sc = .7; ang = k < (n - 1) / 2 ? 90 : 270; }
+    else if (c) { x = 0; sc = 1; }
+    else { x = Math.sign(o) * (gw / 2 + st * .6 + (a - 1) * st); sc = ks; ang = o < 0 ? 90 : 270; }   // tetangga menghadap ke tengah
+    it.el.style.transform = `translate(${x - W / 2}px,0) scale(${sc})`;
+    it.el.style.filter = c || cur < 0 ? '' : 'blur(2.2px)';
+    it.el.style.opacity = c ? 1 : (a > 7 ? 0 : cur < 0 ? .9 : .78);
+    it.el.style.zIndex = c ? 20 : 10 - Math.min(a, 9);
+    it.el.classList.toggle('sel', c);
+    const hw = c ? gw : (cur < 0 ? rs : st);
+    it.hit.style.width = hw + 'px'; it.hit.style.transform = `translateX(${x - hw / 2}px)`;
+    it.hit.style.zIndex = c ? 25 : 15; it.hit.classList.toggle('sel', c); it.hit.style.display = a > 7 ? 'none' : '';
+    it.tt.dragEnabled = c;
+    if (ang != null) it.tt.rotateTo(ang, 800); else if (!it.wasSel) it.tt.rotateTo(0, 800);
+    it.wasSel = c;
   });
-  const it = items[cur], p = it.p;
+  const info = $('#info'), it = items[cur], p = it?.p;
+  info.classList.toggle('off', !p);
+  if (!p) { $('#count').textContent = `${n} item`; $('#sws').style.display = 'none'; return; }
   $('#name').textContent = p.nama || ''; $('#price').textContent = p.harga || '';
-  $('#go').href = link(p); $('#count').textContent = `${cur + 1}/${items.length}`;
+  $('#go').href = link(p); $('#count').textContent = `${cur + 1}/${n}`;
   const sw = $('#sws'); sw.innerHTML = '';
   p.warna.forEach((w, k) => {
     const b = document.createElement('button'); b.className = 'sw' + (k === it.ci ? ' on' : ''); b.style.background = w.hex || '#999'; b.title = w.nama || '';
     b.onclick = () => { it.ci = k; it.tt.set({ atlas: w.atlas }); go(cur); };
     sw.appendChild(b);
   });
-  $('#sws').style.display = p.warna.length > 1 ? 'flex' : 'none';
+  sw.style.display = p.warna.length > 1 ? 'flex' : 'none';
   syncPill();
 }
 function syncPill() {
+  if (cur < 0) return;
   const v = items[cur].tt.view;
   document.querySelectorAll('#pill button').forEach(b => b.classList.toggle('on', (b.dataset.a === '0' && v === 'depan') || (b.dataset.a === '180' && v === 'belakang')));
 }
-document.querySelectorAll('#pill button').forEach(b => b.onclick = () => items[cur].tt.rotateTo(+b.dataset.a));
-$('#rl').onclick = () => items[cur].tt.rotateBy(-90); $('#rr').onclick = () => items[cur].tt.rotateBy(90);
-$('#prev').onclick = () => go(cur - 1); $('#next').onclick = () => go(cur + 1);
-addEventListener('keydown', e => { if (e.key === 'ArrowLeft') go(cur - 1); if (e.key === 'ArrowRight') go(cur + 1); });
-let wl = 0; addEventListener('wheel', e => { const n = Date.now(); if (n - wl < 350) return; const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; if (Math.abs(d) < 8) return; wl = n; go(cur + (d > 0 ? 1 : -1)); }, { passive: true });
-let sx = null; addEventListener('pointerdown', e => sx = e.target.closest('.item') === items[cur]?.el ? null : e.clientX);
-addEventListener('pointerup', e => { if (sx == null) return; const d = e.clientX - sx; sx = null; if (Math.abs(d) > 40) go(cur + (d < 0 ? 1 : -1)); });
+const mid = () => Math.floor((items.length - 1) / 2), step = d => go(cur < 0 ? mid() : cur + d);
+document.querySelectorAll('#pill button').forEach(b => b.onclick = () => cur >= 0 && items[cur].tt.rotateTo(+b.dataset.a, 900));
+$('#rl').onclick = () => cur >= 0 && items[cur].tt.rotateBy(-90); $('#rr').onclick = () => cur >= 0 && items[cur].tt.rotateBy(90);
+$('#prev').onclick = () => step(-1); $('#next').onclick = () => step(1);
+addEventListener('keydown', e => { if (e.key === 'ArrowLeft') step(-1); if (e.key === 'ArrowRight') step(1); if (e.key === 'Escape') go(-1); });
+// geser dua jari di trackpad / scroll → pindah baju (seperti di video)
+let wl = 0, acc = 0; addEventListener('wheel', e => { const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY; acc += d; const n = Date.now(); if (n - wl < 420 || Math.abs(acc) < 30) return; wl = n; step(acc > 0 ? 1 : -1); acc = 0; }, { passive: true });
+let sx = null; addEventListener('pointerdown', e => sx = e.target.closest('.hit.sel,button,a') ? null : e.clientX);
+addEventListener('pointerup', e => { if (sx == null) return; const d = e.clientX - sx; sx = null; if (Math.abs(d) > 40) step(d < 0 ? 1 : -1); });
+$('.stage').addEventListener('click', e => { if (!e.target.closest('.hit,button,a,.pill,.sw')) go(-1); });   // ketuk area kosong → kembali berjejer
 addEventListener('resize', () => go(cur));
 
 // ---- contoh dulu (kalau belum ada yang diatur di admin / Firestore gagal) ----
