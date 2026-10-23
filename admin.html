@@ -49,7 +49,7 @@ small{color:#666}code,pre{background:#eee;border-radius:6px;padding:2px 5px;font
     <div class="row" style="justify-content:center"><button data-r="-90">↺</button><button data-a="0">Depan</button><button data-a="90">Kanan</button><button data-a="180">Belakang</button><button data-a="270">Kiri</button><button data-r="90">↻</button></div>
     <div class="row" id="pvsw" style="justify-content:center"></div></div>
   <div class="card"><h2>Format gambar</h2>
-    <small>1 file PNG transparan <b>3200×800</b> = 4 kotak persegi 800×800: <b>DEPAN · KANAN · BELAKANG · KIRI</b>. Tanpa gantungan &amp; tanpa background.</small>
+    <small>Lembar <b>kit 1200×1400</b> (lihat template di atas), atau 1 file PNG transparan <b>3200×800</b> = 4 kotak persegi 800×800: <b>DEPAN · KANAN · BELAKANG · KIRI</b>. Tanpa gantungan &amp; tanpa background.</small>
     <div class="row"><a href="kit/template-kit-kaos.png" download>Kaos pendek</a><a href="kit/template-kit-kaos-panjang.png" download>Kaos panjang</a><a href="kit/template-kit-hoodie.png" download>Hoodie</a><a href="kit/template-kit-aksesoris.png" download>Aksesoris</a></div>
     <small>Mockup hitam/putih siap pakai ada di folder <code>kit/</code> (lembar kit 1200×1400, dirakit otomatis jadi 3D) (bisa jadi dasar desain, atau langsung dipakai lewat tombol "Mockup" di tiap warna).</small>
     <small>Atau isi 4 foto terpisah di tiap warna, admin menggabungkannya otomatis.</small></div>
@@ -111,7 +111,7 @@ function renderWarna() {
     const st = d.querySelector('.st'), upload = async f => { st.textContent = 'mengunggah…'; const u = await fb.uploadGambar(f, 'produk'); if (!u) { st.textContent = 'gagal upload'; return; } w.atlas = u; renderWarna(); show(k); };
     d.querySelector('input[type=file]').onchange = async e => {
       const f = e.target.files[0]; if (!f) return; const im = await bmp(f);
-      if (Math.abs(im.width / im.height - 4) > .03) { st.textContent = `Ukuran ${im.width}×${im.height} — harus rasio 4:1 (mis. 3200×800)`; return; }
+      const rr = im.width / im.height; if (![6 / 7, 2, 4].some(t => Math.abs(rr - t) < t * .03)) { st.textContent = `Ukuran ${im.width}×${im.height} — pakai lembar kit 1200×1400, atau 1600×800 (depan|belakang), atau 3200×800 (4 sisi)`; return; }
       upload(f);
     };
     d.querySelector('.gab').onclick = async () => {
