@@ -104,7 +104,7 @@ export class Turntable {
   clear() { if (this.garment) { this.body.remove(this.garment); this.garment.traverse(o => { o.geometry && o.geometry.dispose(); if (o.material) { o.material.map && o.material.map.dispose(); o.material.dispose(); } }); this.garment = null; } }
   build(im, readable) {
     const T = this.T, tiles = this.mode, bk = tiles === 2 ? 1 : 2;
-    const D = (TIPE[this.tipe] || TIPE.kaos).depth, H = D * 1.9;           // setengah tebal maksimum
+    const D = (TIPE[this.tipe] || TIPE.kaos).depth, H = D * 2.3;           // setengah tebal maksimum
     const mkTex = idx => { const c = document.createElement('canvas'); c.width = c.height = 1024; const g = c.getContext('2d');
       g.drawImage(im, idx * im.naturalWidth / tiles, 0, im.naturalWidth / tiles, im.naturalHeight, 0, 0, 1024, 1024);
       const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 8; t.minFilter = T.LinearMipmapLinearFilter; return t; };
@@ -117,22 +117,19 @@ export class Turntable {
       if (sign < 0) for (let i = 0; i < uv.count; i++) uv.setX(i, 1 - uv.getX(i));      // sisi belakang dilihat dari belakang → cermin
       let mx = 1; for (let i = 0; i < F.S.length; i++) if (F.S[i] > mx) mx = F.S[i];
       for (let i = 0; i < pos.count; i++) {
-        const u = uv.getX(i), v = 1 - uv.getY(i), d = sample(F, u, v), k = Math.min(1, d / 26);
-        const body = Math.sqrt(k) * (0.78 + 0.22 * Math.min(1, d / (mx * .8)));
+        const u = uv.getX(i), v = 1 - uv.getY(i), d = sample(F, u, v), k = Math.min(1, d / 40);
+        const tube = Math.sqrt(Math.max(0, 1 - (1 - k) * (1 - k)));                     // penampang bulat → baju terisi badan (ghost manekin)
         const x = pos.getX(i), yy = pos.getY(i), ph = sign < 0 ? 2.1 : 0, dy = Math.max(0, 350 - yy), g = Math.min(1, dy / 750);
-        const th = Math.atan2(x, dy + 70);
-        let wob = Math.sin(x * .045 + Math.sin(yy * .011 + ph) * 1.6 + ph) * (.25 + g) * 8              // lipatan vertikal kain menggantung
-                + Math.sin(x * .11 + yy * .013 + ph * 2) * g * 4                                       // lipatan kecil
-                + Math.sin(th * 15 + ph) * Math.min(1, dy / 180) * (1 - g * .6) * 9                   // tarikan dari titik gantungan (bahu)
-                + Math.sin(x * .032 + ph) * Math.max(0, dy - 520) / 230 * 6                           // ujung bawah bergelombang
-                + (Math.abs(x) > 140 && yy > 120 ? Math.sin(x * .07 + yy * .05 + ph) * 5 : 0)          // kerutan lengan
-                + Math.sin(yy * .05 + x * .02 + ph) * Math.exp(-dy / 90) * 6;                           // kerut kerah/bahu
-        wob *= (1 + .5 * Math.abs(Math.sin(x * .017 + ph)));
-        pos.setZ(i, sign * (H * body + wob * k));
+        const chest = 1 + .16 * Math.exp(-Math.pow((yy - 120) / 190, 2)) - .1 * g;      // dada lebih penuh, pinggang sedikit mengecil
+        let wob = Math.sin(x * .04 + Math.sin(yy * .01 + ph) * 1.4 + ph) * (.3 + g) * 3.4
+                + Math.sin(x * .1 + yy * .012 + ph * 2) * g * 1.6
+                + Math.sin(Math.atan2(x, dy + 70) * 13 + ph) * Math.min(1, dy / 180) * (1 - g * .6) * 3.6
+                + Math.sin(x * .03 + ph) * Math.max(0, dy - 540) / 230 * 2.2;
+        pos.setZ(i, sign * (H * 1.35 * tube * chest + wob * Math.min(1, k * 1.5)));
       }
       if (sign < 0) { const A = geo.index.array; for (let i = 0; i < A.length; i += 3) { const t = A[i]; A[i] = A[i + 2]; A[i + 2] = t; } }
       geo.computeVertexNormals();
-      const mat = new T.MeshStandardMaterial({ map: tex, alphaMap: null, transparent: false, alphaTest: .5, roughness: .82, metalness: 0, side: T.FrontSide });
+      const mat = new T.MeshStandardMaterial({ map: tex, alphaMap: null, transparent: false, alphaTest: .5, roughness: .82, metalness: 0, side: T.DoubleSide });
       const mesh = new T.Mesh(geo, mat); group.add(mesh);
       // pastikan potongan alpha (map.a) dipakai: alphaTest dengan map alpha aktif di three r128 lewat map
     });
@@ -145,7 +142,7 @@ export class Turntable {
     const tube = (pts, r, m) => { const c = new T.CatmullRomCurve3(pts.map(p => new T.Vector3(...p))); return new T.Mesh(new T.TubeGeometry(c, 40, r, 10, false), m); };
     const top = 330;                                                       // ujung atas baju (unit lokal)
     this.hang.add(tube([[0, top + 120, 0], [0, top + 90, 0], [14, top + 76, 0], [10, top + 56, 0], [0, top + 44, 0], [0, top + 20, 0]], 3.2, metal));
-    if (!hook) { this.hang.add(tube([[-330, top - 140, 0], [-170, top - 55, 0], [0, top + 14, 0], [170, top - 55, 0], [330, top - 140, 0]], 6.5, wood)); }
+    if (!hook) { this.hang.add(tube([[-120, top - 60, 0], [-60, top - 25, 0], [0, top + 6, 0], [60, top - 25, 0], [120, top - 60, 0]], 5, wood)); }
   }
   layout() {
     const t = TIPE[this.tipe] || TIPE.kaos, s = this.sc * t.scale;
