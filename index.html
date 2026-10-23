@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FVCKTHERULES — Rail</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>👕</text></svg>">
+<style>
+:root{--bg:#d6d9d4;--ink:#111;--acc:#39ff14;--main:"https://fucktherules.my.id"}
+*{box-sizing:border-box;margin:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font:600 12px/1.2 ui-monospace,Menlo,monospace;letter-spacing:.04em;text-transform:uppercase;touch-action:pan-y;user-select:none}
+.room{position:fixed;inset:0 0 34px 0;z-index:-1;background:linear-gradient(#aab3ad 0 72%,#8c8a82 72% 100%)}
+.lockers{position:absolute;left:0;right:0;top:0;height:72%;background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22150%22%20height%3D%22520%22%20viewBox%3D%220%200%20150%20520%22%3E%3Crect%20width%3D%22150%22%20height%3D%22520%22%20fill%3D%22%23aab3ad%22/%3E%3Crect%20x%3D%225%22%20y%3D%226%22%20width%3D%22140%22%20height%3D%22508%22%20rx%3D%222%22%20fill%3D%22%23c8d0ca%22%20stroke%3D%22%237f8882%22%20stroke-width%3D%222%22/%3E%3Cg%20stroke%3D%22%238f9993%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M30%2034h90M30%2046h90M30%2058h90M30%2070h90M30%2082h90%22/%3E%3C/g%3E%3Crect%20x%3D%2252%22%20y%3D%22112%22%20width%3D%2246%22%20height%3D%2218%22%20rx%3D%222%22%20fill%3D%22%23e8ece8%22%20stroke%3D%22%237f8882%22/%3E%3Cg%20stroke%3D%22%238f9993%22%20stroke-width%3D%223%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M30%20440h90M30%20452h90M30%20464h90M30%20476h90%22/%3E%3C/g%3E%3Crect%20x%3D%22118%22%20y%3D%22250%22%20width%3D%228%22%20height%3D%2246%22%20rx%3D%223%22%20fill%3D%22%236d7771%22/%3E%3Ccircle%20cx%3D%2275%22%20cy%3D%22121%22%20r%3D%220%22/%3E%3Cpath%20d%3D%22M5%206v508%22%20stroke%3D%22%23fff%22%20stroke-opacity%3D%22.35%22%20stroke-width%3D%222%22/%3E%3C/svg%3E") center top/auto 100% repeat-x}
+.lockers::after{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 45%,rgba(255,255,255,.55),rgba(255,255,255,0) 55%),linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,0) 20%)}
+.bench{position:absolute;left:0;right:0;top:72%;height:7px;background:#5b3f2a;box-shadow:0 14px 22px rgba(0,0,0,.25)}
+.floor{position:absolute;left:0;right:0;bottom:0;height:28%;background:repeating-linear-gradient(90deg,transparent 0 119px,rgba(0,0,0,.12) 119px 120px),linear-gradient(#9a978d,#807d73)}
+.rod{background:#555!important;height:3px!important;box-shadow:0 2px 3px rgba(0,0,0,.3)}
+.info{background:rgba(236,238,234,.82);backdrop-filter:blur(6px);padding:10px 18px;border-radius:14px;width:max-content;max-width:90vw}
+.stage{position:fixed;inset:0 0 34px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:env(safe-area-inset-top)}
+.rod{position:absolute;left:0;right:0;top:calc(50% - 21vh);height:2px;background:#999}
+.rail{position:relative;width:100%;height:48vh;margin-top:-6vh}
+.item{position:absolute;left:50%;top:0;width:min(46vw,280px);transform-origin:50% 0;transition:transform .55s cubic-bezier(.2,.8,.2,1),filter .55s,opacity .55s;cursor:pointer;will-change:transform}
+.item .hook{display:block;margin:0 auto;width:28px;height:30px}
+.item img,.item .ph{display:block;width:100%;aspect-ratio:3/4;object-fit:contain;mix-blend-mode:multiply;pointer-events:none;-webkit-user-drag:none}
+.ph{background:none}
+.info{position:relative;text-align:center;margin-top:3vh;min-height:92px;z-index:2}
+.info h1{font-size:13px;font-weight:800;max-width:80vw;margin:0 auto 6px}
+.info .price{opacity:.6;margin-bottom:12px}
+.btn{display:inline-block;border:1px solid var(--ink);border-radius:99px;padding:8px 16px;color:var(--ink);text-decoration:none;background:transparent;font:inherit;cursor:pointer}
+.btn:hover{background:var(--ink);color:var(--bg)}
+.dots{position:fixed;top:calc(14px + env(safe-area-inset-top));left:0;right:0;text-align:center;opacity:.55}
+.brand{position:fixed;top:calc(14px + env(safe-area-inset-top));left:16px;font-weight:800}
+.nav{position:fixed;top:50%;transform:translateY(-50%);font-size:22px;background:none;border:0;padding:16px;cursor:pointer;color:var(--ink);opacity:.5}
+.nav.l{left:4px}.nav.r{right:4px}.nav:hover{opacity:1}
+.ticker{position:fixed;left:0;right:0;bottom:0;height:34px;background:var(--acc);overflow:hidden;display:flex;align-items:center;padding-bottom:env(safe-area-inset-bottom);box-sizing:content-box}
+.ticker div{white-space:nowrap;animation:mq 28s linear infinite;font-size:10px}
+@keyframes mq{to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion:reduce){.ticker div{animation:none}.item{transition:none}}
+</style>
+</head>
+<body>
+<div class="brand">FVCKTHERULES</div>
+<div class="dots" id="dots"></div>
+<button class="nav l" id="prev" aria-label="Sebelumnya">←</button>
+<button class="nav r" id="next" aria-label="Berikutnya">→</button>
+
+<div class="room"><div class="lockers"></div><div class="bench"></div><div class="floor"></div></div>
+<div class="stage">
+  <div class="rod"></div>
+  <div class="rail" id="rail"></div>
+  <div class="info">
+    <h1 id="name">Memuat…</h1>
+    <div class="price" id="price"></div>
+    <a class="btn" id="go" href="#" target="_blank" rel="noopener">Lihat / Beli ↗</a>
+  </div>
+</div>
+
+<div class="ticker"><div id="mq"></div></div>
+
+<script type="module">
+// ===== PENGATURAN =====
+const MAIN = 'https://fucktherules.my.id';          // toko utama
+const TICKER = 'NEW DROPS • JAKARTA • FVCKTHERULES • PRE-ORDER OPEN • ';
+const FB_URL = MAIN + '/firebase.js?v=20261030';     // samakan dengan versi yang dipakai folder game
+
+// Data cadangan (dipakai kalau Firestore gagal dimuat) — ganti thumbnail dengan URL gambar kamu
+const DEMO = ['#2b2b2b','#d9d3c4','#9fb6cf','#e9d34a','#f2f2f0','#6d7a5a'].map((c,i)=>({id:'d'+i,nama:'Produk '+(i+1),harga:'Rp 189.000',color:c}));
+
+const $ = s => document.querySelector(s);
+const rail = $('#rail');
+$('#mq').textContent = (TICKER).repeat(12);
+
+let items = [], els = [], cur = 0;
+
+const hookSVG = '<svg class="hook" viewBox="0 0 28 30"><path d="M14 2a4 4 0 1 1 0 8v5M14 15 2 24h24z" fill="none" stroke="#7a5a3a" stroke-width="2" stroke-linejoin="round"/></svg>';
+const tee = c => `<svg class="ph" viewBox="0 0 300 400"><path d="M100 40 60 70 20 130l45 25 15-25v230h140V130l15 25 45-25-40-60-40-30q-50 40-100 0z" fill="${c}"/></svg>`;
+
+function build(list){
+  items = list; rail.innerHTML = '';
+  els = items.map((p,i)=>{
+    const d = document.createElement('div'); d.className = 'item';
+    d.innerHTML = hookSVG + (p.thumbnail ? `<img alt="${(p.nama||'').replace(/"/g,'')}" loading="lazy" src="${p.thumbnail}">` : tee(p.color||'#bbb'));
+    d.onclick = () => i===cur ? window.open(link(p),'_blank','noopener') : go(i);
+    rail.appendChild(d); return d;
+  });
+  $('#dots').textContent = '';
+  go(Math.min(cur, items.length-1), true);
+}
+const link = p => p.id && !String(p.id).startsWith('d') ? `${MAIN}/#${p.id}` : MAIN;
+
+function go(i, first){
+  cur = (i + items.length) % items.length; if(!items.length) return;
+  const w = Math.min(innerWidth*.46, 280), gap = Math.min(innerWidth*.34, 240);
+  els.forEach((el,k)=>{
+    const o = k-cur, a = Math.abs(o);
+    el.style.transform = `translateX(calc(-50% + ${o*gap}px)) scale(${a? .62 : 1})`;
+    el.style.filter = a ? `blur(${Math.min(a*3+2,8)}px) grayscale(.5)` : 'none';
+    el.style.opacity = a>3 ? 0 : (a ? .75 : 1);
+    el.style.zIndex = 10-a;
+    el.style.pointerEvents = a>3 ? 'none' : 'auto';
+  });
+  const p = items[cur];
+  $('#name').textContent = p.nama || ''; $('#price').textContent = p.harga || '';
+  $('#go').href = link(p);
+  $('#dots').textContent = `${cur+1} / ${items.length}`;
+}
+
+$('#prev').onclick = () => go(cur-1); $('#next').onclick = () => go(cur+1);
+addEventListener('keydown', e => { if(e.key==='ArrowLeft') go(cur-1); if(e.key==='ArrowRight') go(cur+1); });
+let wl = 0; addEventListener('wheel', e => { const n = Date.now(); if(n-wl<350) return; const d = Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY; if(Math.abs(d)<8) return; wl=n; go(cur+(d>0?1:-1)); },{passive:true});
+let sx = null; addEventListener('pointerdown', e => sx = e.clientX);
+addEventListener('pointerup', e => { if(sx==null) return; const d = e.clientX-sx; sx=null; if(Math.abs(d)>40) go(cur+(d<0?1:-1)); });
+addEventListener('resize', () => go(cur));
+
+build(DEMO);
+try {
+  const fb = await import(FB_URL);
+  fb.listenProduk(list => {
+    const ok = list.filter(p => p.thumbnail && p.badge !== 'sold');
+    if (ok.length) build(ok);
+  });
+} catch(e){ console.warn('Firestore gagal, pakai data demo', e); }
+</script>
+</body>
+</html>
