@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Rail Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f3f1;color:#111;font:14px/1.4 system-ui,sans-serif;padding:14px;max-width:980px;margin:auto}
+h1{font-size:18px;margin:6px 0 12px}h2{font-size:14px;margin:0 0 8px;text-transform:uppercase;letter-spacing:.05em}
+.card{background:#fff;border:1px solid #ddd;border-radius:12px;padding:12px;margin-bottom:12px}
+input,select,button{font:inherit;padding:8px 10px;border:1px solid #bbb;border-radius:8px;background:#fff}
+button{cursor:pointer}button.pri{background:#111;color:#fff;border-color:#111}button.del{color:#b3261e}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:6px 0}.grow{flex:1;min-width:120px}
+.list button{display:block;width:100%;text-align:left;margin-bottom:6px}.list button.on{border-color:#111;background:#eef}
+.grid{display:grid;grid-template-columns:1fr 300px;gap:12px}@media(max-width:760px){.grid{grid-template-columns:1fr}}
+.warna{border:1px dashed #bbb;border-radius:10px;padding:8px;margin:8px 0}.warna img{height:44px;background:#ddd;border-radius:6px}
+.prev{position:relative;height:420px;overflow:hidden;background:#ececea;border-radius:10px;display:flex;justify-content:center}
+.prev .rod{position:absolute;left:0;right:0;top:20px;height:2px;background:#999}
+.prev .tt{position:relative;width:240px;aspect-ratio:3/4;margin-top:60px}
+.tt-h{position:absolute;left:50%;top:-40px;width:42%;aspect-ratio:200/120;transform:translateX(-50%)}.tt-h svg{display:block;width:100%;height:100%}
+.tt-stack{position:absolute;inset:0;z-index:1;transform-origin:50% 0;pointer-events:none}
+.tt-v{position:absolute;inset:0;background-repeat:no-repeat}
+.sw{width:22px;height:22px;border-radius:50%;border:1px solid #0006;padding:0}.sw.on{outline:2px solid #111;outline-offset:2px}
+small{color:#666}code,pre{background:#eee;border-radius:6px;padding:2px 5px;font-size:12px}pre{padding:8px;overflow:auto}
+#msg{position:sticky;top:0;z-index:9}
+</style></head><body>
+<h1>Rail Admin — atur baju 3D</h1><div id="msg"></div>
+
+<div class="card" id="login"><h2>Login admin</h2><div class="row">
+<input id="em" type="email" placeholder="email admin" class="grow"><input id="pw" type="password" placeholder="password" class="grow"><button class="pri" id="bl">Masuk</button></div></div>
+
+<div id="app" hidden>
+<div class="grid"><div>
+  <div class="card"><h2>1. Pilih produk dari web utama</h2>
+    <div class="row"><select id="prod" class="grow"></select><button class="pri" id="add">+ Masukkan ke Rail</button></div>
+    <small>Produk yang sudah ada di Rail:</small><div class="list" id="list"></div>
+    <div class="row"><button id="lo">Keluar</button></div></div>
+
+  <div class="card" id="ed" hidden><h2>2. Atur: <span id="edname"></span></h2>
+    <div class="row"><label>Jenis</label><select id="tipe"></select>
+      <label>Urutan</label><input id="order" type="number" style="width:80px"><label><input id="aktif" type="checkbox"> tampil</label></div>
+    <div class="row"><label>Ukuran</label><input id="scale" type="range" min=".5" max="1.5" step=".01" class="grow"><span id="scv"></span></div>
+    <div class="row"><label>Geser ↕</label><input id="ypos" type="range" min="-25" max="25" step=".5" class="grow"><span id="yv"></span></div>
+    <small>Atur Ukuran/Geser sampai pas di gantungan (lihat pratinjau). Jenis otomatis memilih gantungan &amp; ukuran bawaan.</small>
+    <h2 style="margin-top:12px">Warna</h2><div id="warna"></div>
+    <div class="row"><button id="addw">+ Tambah warna</button></div>
+    <div class="row"><button class="pri" id="save">Simpan</button><button class="del" id="rm">Hapus dari Rail</button></div></div>
+</div>
+<div>
+  <div class="card"><h2>Pratinjau</h2><div class="prev" id="pv"><div class="rod"></div></div>
+    <div class="row" style="justify-content:center"><button data-r="-90">↺</button><button data-a="0">Depan</button><button data-a="90">Kanan</button><button data-a="180">Belakang</button><button data-a="270">Kiri</button><button data-r="90">↻</button></div>
+    <div class="row" id="pvsw" style="justify-content:center"></div></div>
+  <div class="card"><h2>Format gambar</h2>
+    <small>1 file PNG transparan <b>2400×800</b> = 4 kotak 600×800: <b>DEPAN · KANAN · BELAKANG · KIRI</b>. Tanpa gantungan &amp; tanpa background.</small>
+    <div class="row"><a href="templates/template-kaos.png" download>Template kaos</a><a href="templates/template-hoodie.png" download>Hoodie</a><a href="templates/template-aksesoris.png" download>Aksesoris</a></div>
+    <small>Atau isi 4 foto terpisah di tiap warna, admin menggabungkannya otomatis.</small></div>
+</div></div></div>
+
+<script type="module">
+import { Turntable, TIPE } from './rail-core.js';
+const MAIN = 'https://fucktherules.my.id', FB = MAIN + '/firebase.js?v=20261030';
+const FS = 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js', AU = 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
+const $ = s => document.querySelector(s), msg = (t, bad) => { $('#msg').innerHTML = `<div class="card" style="border-color:${bad ? '#b3261e' : '#2a7'}">${t}</div>`; setTimeout(() => $('#msg').innerHTML = '', 5000); };
+const fb = await import(FB), fs = await import(FS), au = await import(AU);
+let prods = {}, cfgs = {}, cur = null, tt = null, pvi = 0;
+
+$('#tipe').innerHTML = Object.entries(TIPE).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+$('#bl').onclick = async () => { if (!await fb.loginAdmin($('#em').value.trim(), $('#pw').value)) msg('Login gagal', true); };
+$('#lo').onclick = () => fb.logoutAdmin();
+au.onAuthStateChanged(fb.adminAuth, u => { $('#login').hidden = !!u; $('#app').hidden = !u; });
+
+fb.listenProduk(l => { prods = Object.fromEntries(l.map(p => [p.id, p])); $('#prod').innerHTML = l.map(p => `<option value="${p.id}">${p.nama} — ${p.harga || ''}</option>`).join(''); renderList(); });
+fs.onSnapshot(fs.collection(fb.adminDb, 'rail'), s => { cfgs = Object.fromEntries(s.docs.map(d => [d.id, d.data()])); renderList(); },
+  e => msg('Gagal baca koleksi "rail" — tambahkan rules Firestore (lihat README). ' + e.message, true));
+
+function renderList() {
+  $('#list').innerHTML = '';
+  Object.entries(cfgs).sort((a, b) => (a[1].order ?? 0) - (b[1].order ?? 0)).forEach(([id, c]) => {
+    const b = document.createElement('button'); b.className = id === cur?.pid ? 'on' : '';
+    b.textContent = `${c.aktif === false ? '⏸ ' : ''}${prods[id]?.nama || id} · ${TIPE[c.tipe]?.label || c.tipe} · ${c.warna?.length || 0} warna`;
+    b.onclick = () => open(id, structuredClone(c)); $('#list').appendChild(b);
+  });
+}
+$('#add').onclick = () => { const id = $('#prod').value; if (!id) return; open(id, cfgs[id] ? structuredClone(cfgs[id]) : { tipe: 'kaos', scale: 1, y: 0, order: Object.keys(cfgs).length, aktif: true, warna: [{ nama: 'Warna 1', hex: '#222222', atlas: '' }] }); };
+
+function open(pid, c) {
+  cur = { pid, ...c }; $('#ed').hidden = false; $('#edname').textContent = prods[pid]?.nama || pid;
+  $('#tipe').value = c.tipe; $('#order').value = c.order ?? 0; $('#aktif').checked = c.aktif !== false;
+  $('#scale').value = c.scale ?? 1; $('#ypos').value = c.y ?? 0;
+  const pv = $('#pv'); pv.querySelector('.tt')?.remove(); const h = document.createElement('div'); pv.appendChild(h);
+  tt = new Turntable(h, { tipe: c.tipe, scale: c.scale, y: c.y, atlas: c.warna[0]?.atlas }); tt.enableDrag(); pvi = 0;
+  renderWarna(); renderList(); sync();
+}
+function sync() { $('#scv').textContent = (+$('#scale').value).toFixed(2); $('#yv').textContent = $('#ypos').value;
+  cur.tipe = $('#tipe').value; cur.scale = +$('#scale').value; cur.y = +$('#ypos').value; cur.order = +$('#order').value; cur.aktif = $('#aktif').checked;
+  tt.set({ tipe: cur.tipe, scale: cur.scale, y: cur.y }); }
+['tipe', 'scale', 'ypos', 'order', 'aktif'].forEach(i => $('#' + i).oninput = sync);
+
+function renderWarna() {
+  const box = $('#warna'); box.innerHTML = '';
+  cur.warna.forEach((w, k) => {
+    const d = document.createElement('div'); d.className = 'warna';
+    d.innerHTML = `<div class="row"><input class="grow" value="${w.nama || ''}" placeholder="nama warna"><input type="color" value="${w.hex || '#222222'}">
+      ${w.atlas ? `<img src="${w.atlas}">` : '<small>belum ada gambar</small>'}<button class="del">✕</button></div>
+      <div class="row"><label>Atlas jadi: <input type="file" accept="image/png,image/webp"></label><small class="st"></small></div>
+      <details><summary><small>…atau gabung dari 4 foto terpisah</small></summary><div class="row">
+      ${['Depan', 'Kanan', 'Belakang', 'Kiri'].map(n => `<label>${n} <input type="file" accept="image/*" data-v></label>`).join('')}<button class="gab">Gabung &amp; upload</button></div></details>`;
+    const [nm, hx] = d.querySelectorAll('input:not([type=file])');
+    nm.oninput = () => w.nama = nm.value; hx.oninput = () => { w.hex = hx.value; drawSw(); };
+    d.querySelector('.del').onclick = () => { cur.warna.splice(k, 1); renderWarna(); };
+    const st = d.querySelector('.st'), upload = async f => { st.textContent = 'mengunggah…'; const u = await fb.uploadGambar(f, 'produk'); if (!u) { st.textContent = 'gagal upload'; return; } w.atlas = u; renderWarna(); show(k); };
+    d.querySelector('input[type=file]').onchange = async e => {
+      const f = e.target.files[0]; if (!f) return; const im = await bmp(f);
+      if (Math.abs(im.width / im.height - 3) > .02) { st.textContent = `Ukuran ${im.width}×${im.height} — harus rasio 3:1 (mis. 2400×800)`; return; }
+      upload(f);
+    };
+    d.querySelector('.gab').onclick = async () => {
+      const fl = [...d.querySelectorAll('[data-v]')].map(i => i.files[0]); if (fl.some(x => !x)) { st.textContent = 'Isi keempat gambar'; return; }
+      const c = document.createElement('canvas'); c.width = 2400; c.height = 800; const g = c.getContext('2d');
+      for (let i = 0; i < 4; i++) { const im = await bmp(fl[i]), r = Math.min(600 / im.width, 800 / im.height); g.drawImage(im, i * 600 + (600 - im.width * r) / 2, (800 - im.height * r) / 2, im.width * r, im.height * r); }
+      c.toBlob(b => upload(new File([b], 'atlas.png', { type: 'image/png' })), 'image/png');
+    };
+    d.onclick = () => show(k); box.appendChild(d);
+  });
+  drawSw();
+}
+const bmp = f => createImageBitmap(f);
+function show(k) { pvi = k; tt.set({ atlas: cur.warna[k]?.atlas || '' }); drawSw(); }
+function drawSw() { $('#pvsw').innerHTML = ''; cur.warna.forEach((w, k) => { const b = document.createElement('button'); b.className = 'sw' + (k === pvi ? ' on' : ''); b.style.background = w.hex; b.onclick = () => show(k); $('#pvsw').appendChild(b); }); }
+$('#addw').onclick = () => { cur.warna.push({ nama: 'Warna ' + (cur.warna.length + 1), hex: '#888888', atlas: '' }); renderWarna(); };
+document.querySelectorAll('[data-a]').forEach(b => b.onclick = () => tt?.rotateTo(+b.dataset.a));
+document.querySelectorAll('[data-r]').forEach(b => b.onclick = () => tt?.rotateBy(+b.dataset.r));
+
+$('#save').onclick = async () => {
+  if (cur.warna.some(w => !w.atlas)) return msg('Semua warna harus punya gambar atlas', true);
+  const { pid, ...data } = cur; data.updated = Date.now();
+  try { await fs.setDoc(fs.doc(fb.adminDb, 'rail', pid), data); msg('Tersimpan ✔'); } catch (e) { msg('Gagal simpan: ' + e.message, true); }
+};
+$('#rm').onclick = async () => { if (!confirm('Hapus dari Rail?')) return; await fs.deleteDoc(fs.doc(fb.adminDb, 'rail', cur.pid)); $('#ed').hidden = true; cur = null; };
+</script></body></html>
