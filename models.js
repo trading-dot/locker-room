@@ -27,9 +27,11 @@ export async function build(it){
   const key=it.modelKey;
   if(key)ok[key]??=fetch(`assets/models/${key}.glb`,{method:'HEAD'}).then(r=>r.ok).catch(()=>false);
   if(key&&await ok[key]){
-    const o=(await gl.loadAsync(`assets/models/${key}.glb`)).scene;
+    const cg=gl._c??={},o=(await (cg[key]??=gl.loadAsync(`assets/models/${key}.glb`))).scene.clone(true),ud=o.userData;
     o.traverse(c=>{if(c.isMesh){c.material=c.material.clone();c.material.color.set(col)}});
-    const b=new T.Box3().setFromObject(o);o.scale.setScalar(.75/(b.max.y-b.min.y));o.position.y-=new T.Box3().setFromObject(o).max.y;body.add(o);
+    if(ud.fit){if(ud.zf)zf=ud.zf}// GLB dari tools/glb: sudah dalam meter & koordinat gantung (leher di y=0), tanpa normalisasi
+    else{const b=new T.Box3().setFromObject(o);o.scale.setScalar(.75/(b.max.y-b.min.y));o.position.y-=new T.Box3().setFromObject(o).max.y}
+    body.add(o);
   }else if(acc){
     m.side=T.DoubleSide;
     if(k=='topi'){const d=add(new T.SphereGeometry(.1,40,20,0,6.2832,0,1.5708),[0,-.12,0]);d.scale.y=.85;const br=add(new T.CircleGeometry(.11,32,0,Math.PI),[0,-.12,0]);br.rotation.x=Math.PI/2;zf=.1}

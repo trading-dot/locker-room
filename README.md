@@ -25,3 +25,8 @@ Ongkir otomatis (Biteship), voucher, login pelanggan, fallback 2D jika WebGL gag
 - Checkout: bukti bayar diunggah via `FB.uploadGambar(file,'bukti')`, lalu order `status: pending`, `sumber: 3d-showroom` lewat `FB.saveOrder` (jika ada) atau langsung ke koleksi `orders`. Cek `#sheet` handler di index.html jika format order web utama berbeda.
 - Isi konstanta `PAY` di index.html untuk menampilkan info rekening.
 - `core.js`, `ui.css`, dan file `rail*` tidak dipakai index.html baru (dibiarkan agar tidak merusak halaman lain).
+
+## Model 3D (.glb)
+- `assets/models/*.glb` (10 file, ±3 MB total) dipakai otomatis oleh `models.js` (admin3d dan showroom). Pratinjau: `assets/models/preview.png`.
+- Bentuknya 3D sungguhan (ketebalan, lipatan, kerah, tudung, resleting, saku, rib, topi 6 panel, tas dengan gagang), jadi terlihat benar dari samping dan belakang. Desain Depan/Belakang/Kiri/Kanan dari `produk3d` tetap ditempel sebagai decal di atasnya.
+- Mau ganti/ubah bentuk: lihat `tools/glb/README.md`.

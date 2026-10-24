@@ -53,7 +53,7 @@ body.det #hint,body.det #nx{display:flex}
 <script type="module">
 import * as T from 'three';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
-import {build,MK} from './models.js';
+import {build,MK} from './models.js?v=glb1';
 /* ===== Integrasi web utama: Firebase (project fvcktherules-store) + Cloudinary lewat uploadGambar ===== */
 let FB={},FS={};
 try{FB=await import('https://fucktherules.my.id/firebase.js?v=20261030');FS=await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js')}catch(e){console.warn('Firebase gagal dimuat, mode demo',e)}
