@@ -1,5 +1,7 @@
 # Rail — rak baju 3D (GitHub Pages)
 
+**Mesin 3D baru (WebGL2):** `rail-core.js` sekarang membentuk mesh bervolume dari siluet gambar (bukan lagi lembaran bertumpuk): ada ketebalan, tepi membulat, lipatan kain menjuntai dari gantungan, pencahayaan, gantungan kayu 3D, dan kain "tertinggal" saat diputar. Tanpa library eksternal (tidak perlu three.js). Gambar WAJIB PNG transparan (siluet diambil dari alpha); kalau background-nya tidak transparan, bajunya jadi kotak.
+
 File: `index.html` (tampilan), `admin.html` (pengaturan), `rail-core.js`, `templates/*.png`, `CNAME`, `.nojekyll`.
 Memakai `firebase.js` toko utama (produk, login admin, upload Cloudinary) — tidak ada katalog baru.
 
@@ -23,10 +25,5 @@ Awal: semua baju berjejer tampak samping di gantungan. Ketuk / geser dua jari / 
 ## Format BARU: lembar pola (lebih gampang)
 PNG transparan **1600×800 px** = 2 kotak 800×800: `DEPAN | BELAKANG`. Tidak perlu gambar samping — sisi & ketebalan dibuat otomatis oleh 3D, jadi putaran depan→samping→belakang halus.
 Pakai `pola/template-pola-<jenis>.png` (biru, seperti template kit) sebagai panduan, hasilnya export tanpa layer panduan. Contoh siap pakai: `pola/pola-<jenis>-<hitam|putih>.png`.
-Format lama 4 kotak (3200×800) tetap jalan; sistem otomatis mendeteksi dari rasio gambar.
-
-## Gaya template (v3d6)
-`pola/template-pola-*.png` kini bergaya template kit (panel biru + garis kelim raglan, leher, pita hem). Mockup `pola-*-hitam|putih.png` memakai panel yang sama. Bentuk 3D samping dibuat rata di panel depan/belakang dengan tepi membulat.
-
-## Format KIT (v3d7, gaya template DLS/FTS)
-PNG transparan **1200×1400** berisi potongan: lengan kiri/kanan (tepi kiri/kanan), badan **depan** (tengah-atas), badan **belakang** (tengah-bawah), lengan belakang (kiri/kanan-bawah). Panduan: `kit/template-kit-<jenis>.png`; contoh: `kit/kit-<jenis>-<hitam|putih>.png`. Sistem mendeteksi dari rasio gambar lalu merakitnya jadi baju 3D (format 4 kotak & 2 kotak lama tetap jalan).
+Format lama 4 kotak (3200×800) tetap jalan; sistem otomatis mendeteksi dari rasio gambar (hanya kotak DEPAN dan BELAKANG yang dipakai, sisi samping dibuat 3D).
+Tips realistis: pakai foto baju asli (depan & belakang, PNG transparan, posisi digantung rata) di kotak DEPAN/BELAKANG — kain, kerutan, dan print asli ikut terbungkus ke mesh 3D.
