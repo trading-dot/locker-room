@@ -1,35 +1,54 @@
-<!doctype html>
-<html lang="id">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RAIL — Virtual Locker Room | FVCKTHERULES</title>
-<meta name="description" content="Explore clothing in a virtual locker room. Rotate, recolor and view every side.">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="rail.css">
-</head>
-<body>
-<header class="topbar"><a class="brand" href="./">FVCK<span>THE</span>RULES <i>/ RAIL</i></a><div class="top-note">VIRTUAL LOCKER ROOM <span class="live-dot"></span></div><a class="admin-link" href="admin.html">ADMIN ↗</a></header>
-<main class="layout">
-<section class="intro"><p class="eyebrow">FT RAIL / 001</p><h1>YOUR FIT.<br><em>YOUR RULES.</em></h1><p class="intro-copy">Explore the pieces. Turn them around. See every side before you make it yours.</p><div class="scene-label"><span class="live-dot"></span> LOCKER ROOM / SHOWROOM</div></section>
-<section class="viewer-wrap">
-  <div class="viewer-top"><span id="pieceNo">PIECE 01</span><span class="drag-hint">↔ DRAG TO ROTATE</span></div>
-  <div id="scene" aria-label="3D clothing viewer"></div>
-  <div class="view-controls"><button data-view="front" class="active">FRONT</button><button data-view="back">BACK</button><button data-view="left">LEFT</button><button data-view="right">RIGHT</button><button id="resetView">RESET ↺</button></div>
-  <div class="viewer-bottom"><span id="pieceName">SELECT A PIECE</span><span>3D PREVIEW · INTERACTIVE</span></div>
-</section>
-<aside class="controls">
-  <div class="section-heading"><span>01 / SELECT PIECE</span><span id="pieceCount">—</span></div>
-  <div id="productList" class="product-list"><div class="empty">Loading pieces…</div></div>
-  <div class="section-heading"><span>02 / COLORWAY</span><span id="colorLabel">BLACK</span></div>
-  <div class="swatches" id="swatches">
-    <button class="swatch selected" data-color="#181818" style="--swatch:#181818" aria-label="Black"></button><button class="swatch" data-color="#f0eee8" style="--swatch:#f0eee8" aria-label="Off white"></button><button class="swatch" data-color="#183b87" style="--swatch:#183b87" aria-label="Blue"></button><button class="swatch" data-color="#9d171b" style="--swatch:#9d171b" aria-label="Red"></button><button class="swatch" data-color="#6e7562" style="--swatch:#6e7562" aria-label="Olive"></button><button class="swatch" data-color="#b9b6ad" style="--swatch:#b9b6ad" aria-label="Grey"></button>
-  </div>
-  <div class="section-heading"><span>03 / VIEW</span><span>360°</span></div>
-  <p class="help">Pilih sisi untuk melihat detail. Kamu juga bisa menggeser model dengan jari atau mouse.</p>
-  <div class="side-legend"><span>F <small>FRONT</small></span><span>B <small>BACK</small></span><span>L <small>LEFT</small></span><span>R <small>RIGHT</small></span></div>
-  <a class="main-site" href="https://fucktherules.my.id">VISIT THE STORE <span>↗</span></a>
-</aside>
-</main>
-<footer><span>FVCKTHERULES © 2026</span><span>SOCCER CULTURE. STREET ATTITUDE.</span><span>BUILT TO EXPLORE.</span></footer>
-<script type="module" src="rail.js"></script>
-</body></html>
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Locker Room 3D — FVCK THE RULES</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="ui.css">
+<style>html,body{height:100%;overflow:hidden}
+#hud{position:fixed;top:14px;left:16px;font-weight:800;font-size:20px;letter-spacing:.12em;pointer-events:none}#hud small{display:block;color:var(--o);font-size:12px}
+#card{position:fixed;top:14px;right:16px;text-align:right;max-width:55%}#card h1{font-size:26px;font-weight:800;text-transform:uppercase;line-height:1}#card p{color:var(--g);margin:4px 0 8px}
+#dock{position:fixed;left:0;right:0;bottom:max(14px,env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:8px}
+#sw{display:flex;gap:10px}#sw i{width:26px;height:26px;border-radius:50%;border:2px solid #fff4;cursor:pointer}#sw i.on{box-shadow:0 0 0 2px #000,0 0 0 4px var(--o)}
+.pill button{padding:8px 12px}</style></head><body>
+<canvas id="c"></canvas>
+<div id="hud">FVCK THE RULES<small>LOCKER ROOM · 3D</small></div>
+<div id="card"><h1 id="pn"></h1><p id="pp"></p><a id="buy" class="b p" target="_blank" rel="noopener">Beli →</a></div>
+<div id="dock"><div id="sw"></div>
+<div class="pill" id="vw"><button data-a="0" class="on">Depan</button><button data-a="3.1416">Belakang</button><button data-a="-1.5708">Kiri</button><button data-a="1.5708">Kanan</button></div>
+<div class="pill" id="cat"><button data-c="all" class="on">Semua</button><button data-c="kaos">Kaos</button><button data-c="hoodie">Hoodie</button><button data-c="aksesoris">Aksesoris</button></div></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="core.js"></script>
+<script>
+const MAIN='https://fucktherules.my.id',$=s=>document.querySelector(s);
+const R=new THREE.WebGLRenderer({antialias:true,canvas:$('#c')});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;R.shadowMap.enabled=true;
+const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(55,1,.1,60);sc.background=new THREE.Color('#0c1113');sc.fog=new THREE.Fog('#0c1113',8,18);
+const room=LK.room(sc),C=new THREE.OrbitControls(cam,R.domElement);
+cam.position.set(0,1.8,3.6);C.target.set(0,1.65,0);C.enableDamping=true;C.enablePan=false;C.minDistance=1.5;C.maxDistance=5;C.minPolarAngle=.8;C.maxPolarAngle=1.75;
+sc.add(new THREE.HemisphereLight('#cfe3ff','#2a2018',.6));
+const sp=new THREE.SpotLight('#fff0d8',1.8,10,.6,.5);sp.position.set(0,4,1.2);sp.target.position.set(0,1.6,0);sp.castShadow=true;sp.shadow.mapSize.set(1024,1024);sc.add(sp,sp.target);
+const DEMO=[{id:'d1',name:'Demo Hoodie',type:'hoodie',price:'Rp 250.000',colors:'Hitam/Navy/Maroon/Abu'},{id:'d2',name:'Demo Kaos',type:'kaos',price:'Rp 150.000',colors:'Putih/Hitam/Cream'},{id:'d3',name:'Demo Tote',type:'aksesoris',price:'Rp 80.000',colors:'Cream/Hitam'}];
+let P=[],hero=null,cat='all',tw=null;const imgs={};
+const gi=p=>imgs[p.id]??=new Promise(r=>{if(!p.img&&!p.data)return r(LK.demo());const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=()=>r(LK.demo());i.src=p.data||p.img});
+async function pick(p){
+ const g=LK.garment(p,await gi(p)),cs=LK.colors(p.colors);g.scale.setScalar(1.15);g.position.set(0,1.65,0);LK.tint(g,cs[0].h);
+ if(hero)sc.remove(hero);hero=g;sc.add(g);
+ $('#pn').textContent=p.name;$('#pp').textContent=p.price||'';$('#buy').href=p.link||MAIN;
+ $('#sw').innerHTML=cs.map((c,i)=>`<i title="${c.n}" data-h="${c.h}" style="background:${c.h}" class="${i?'':'on'}"></i>`).join('')}
+async function rail(){
+ room.items.clear();const L=P.filter(p=>cat=='all'||p.type==cat),n=L.length;
+ for(let i=0;i<n;i++){const p=L[i],g=LK.garment(p,await gi(p)),h=LK.hanger(),o=new THREE.Group();
+  LK.tint(g,LK.colors(p.colors)[0].h);h.position.y=g.userData.top;o.add(g,h);o.scale.setScalar(.62);
+  o.position.set((i-(n-1)/2)*.66,room.railY-.14-g.userData.top*.62,room.railZ);o.userData.pid=p.id;room.items.add(o)}}
+function snap(a){const t=C.target,o=cam.position.clone().sub(t),r=Math.hypot(o.x,o.z),a0=Math.atan2(o.x,o.z),d=((a-a0+Math.PI*3)%(Math.PI*2))-Math.PI,t0=performance.now();
+ tw=()=>{const k=Math.min(1,(performance.now()-t0)/700),e=1-Math.pow(1-k,3),b=a0+d*e;cam.position.set(t.x+Math.sin(b)*r,cam.position.y,t.z+Math.cos(b)*r);return k<1}}
+$('#vw').onclick=e=>{const b=e.target.closest('button');if(!b)return;[...$('#vw').children].forEach(x=>x.classList.toggle('on',x==b));snap(+b.dataset.a)};
+$('#cat').onclick=e=>{const b=e.target.closest('button');if(!b)return;[...$('#cat').children].forEach(x=>x.classList.toggle('on',x==b));cat=b.dataset.c;rail()};
+$('#sw').onclick=e=>{const i=e.target.closest('i');if(!i||!hero)return;[...$('#sw').children].forEach(x=>x.classList.toggle('on',x==i));LK.tint(hero,i.dataset.h)};
+let d0;const rc=new THREE.Raycaster();
+R.domElement.onpointerdown=e=>d0=[e.clientX,e.clientY];
+R.domElement.onpointerup=e=>{if(!d0||Math.hypot(e.clientX-d0[0],e.clientY-d0[1])>6)return;
+ rc.setFromCamera({x:e.clientX/innerWidth*2-1,y:-(e.clientY/innerHeight)*2+1},cam);const h=rc.intersectObjects(room.items.children,true)[0];
+ if(h){let o=h.object;while(o&&!o.userData.pid)o=o.parent;const p=P.find(x=>x.id==o?.userData.pid);if(p)pick(p)}};
+function size(){R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}addEventListener('resize',size);size();
+R.setAnimationLoop(t=>{if(tw&&!tw())tw=null;C.update();if(hero)hero.position.y=1.65+Math.sin(t/900)*.03;R.render(sc,cam)});
+(async()=>{try{if(location.hash=='#preview')P=JSON.parse(localStorage.lk||'[]')}catch(e){}
+ if(!P.length)try{P=await(await fetch('products.json?'+Date.now())).json()}catch(e){}
+ if(!P.length)P=DEMO;await pick(P[0]);rail()})();
+</script></body></html>
