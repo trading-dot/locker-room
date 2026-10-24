@@ -47,7 +47,15 @@ LK.room=sc=>{
  [-3.4,3.4].forEach(px=>{B(2.6,.08,.5,px,.5,-4.2,M('#8a6a45',.7));B(.08,.5,.4,px-1.2,.25,-4.2,steel);B(.08,.5,.4,px+1.2,.25,-4.2,steel)});
  [-3,3].forEach(px=>[-2,2].forEach(pz=>B(.25,.05,3,px,4.18,pz,M('#fff',.5,0,'#fffbe8'))));
  const ring=new THREE.Mesh(new THREE.RingGeometry(1,1.05,64),new THREE.MeshBasicMaterial({color:'#ff5a1f'}));ring.rotation.x=-Math.PI/2;ring.position.y=.01;sc.add(ring);
- const rail=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,11,12),steel);rail.rotation.z=Math.PI/2;rail.position.set(0,2.45,-3.6);sc.add(rail);
- [-5.4,5.4].forEach(px=>{const r=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,1.75,8),steel);r.position.set(px,3.32,-3.6);sc.add(r)});
  [[-3,3.8,0],[3,3.8,0]].forEach(p=>{const l=new THREE.PointLight('#fff4dc',.5,12);l.position.set(...p);sc.add(l)});
- const items=new THREE.Group();sc.add(items);return{items,railY:2.45,railZ:-3.6}};
+ {const l=new THREE.PointLight('#fff4dc',.6,9);l.position.set(-4.5,2.6,0);sc.add(l)}
+ sc.add(new THREE.DirectionalLight('#fff4e0',.8).translateX(2).translateY(5).translateZ(6))};
+LK.zone=(sc,label,x,z,ry)=>{
+ const g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:'#9aa3a8',metalness:.9,roughness:.3}),
+ r=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,7.2,12),m);r.rotation.z=Math.PI/2;r.position.y=2.45;g.add(r);
+ [-3.5,3.5].forEach(px=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(.015,.015,1.75,8),m);c.position.set(px,3.32,0);g.add(c)});
+ const c=document.createElement('canvas');c.width=1024;c.height=200;const q=c.getContext('2d');q.fillStyle='#0b0d0e';q.fillRect(0,0,1024,200);q.fillStyle='#ff5a1f';q.fillRect(0,0,1024,10);
+ q.fillStyle='#f3efe6';q.font='800 120px Impact,Arial Black,sans-serif';q.textAlign='center';q.textBaseline='middle';q.fillText(label,512,110);
+ const s=new THREE.Mesh(new THREE.PlaneGeometry(3.2,.62),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c)}));s.position.set(0,3.55,-.3);g.add(s);
+ g.position.set(x,0,z);g.rotation.y=ry;sc.add(g);return g};
+

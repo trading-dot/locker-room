@@ -12,7 +12,7 @@ input,select{width:100%;font:inherit;color:var(--t);background:#ffffff0d;border:
 <div><h2>3 · Atur produk</h2><div id="ed" hidden>
 <div id="pvw"></div><div class="pill" id="vw" style="margin-top:8px;justify-content:center"><button data-r="0" class="on">Depan</button><button data-r="3.1416">Belakang</button><button data-r="1.5708">Kiri</button><button data-r="-1.5708">Kanan</button></div>
 <label>Jenis</label><select id="ty"><option value="kaos">Kaos</option><option value="hoodie">Hoodie</option><option value="aksesoris">Aksesoris (tote)</option></select>
-<label>Warna (pisah /, boleh Nama:#hex)</label><input id="co"><label>Link beli</label><input id="lk" placeholder="https://…">
+<label>Warna (pisah /, boleh Nama:#hex)</label><input id="co"><label>Ukuran (pisah /, kosongkan untuk aksesoris)</label><input id="sz"><label>Link beli</label><input id="lk" placeholder="https://…">
 <label>Gambar desain (PNG 2048×512: depan | belakang | kiri | kanan)</label><input id="fi" type="file" accept="image/png,image/webp">
 <div class="r"><a class="b" href="img/template-desain.png" download>Template</a><button class="b" id="dl">Unduh gambar</button><button class="b" id="rm">Hapus</button></div></div></div></div>
 <h2>4 · Simpan</h2><div class="r"><button class="b p" id="sv">Simpan &amp; preview</button><button class="b" id="ex">Unduh products.json</button><a class="b" href="index.html#preview" target="_blank">Buka preview</a></div>
@@ -36,9 +36,9 @@ const fit=()=>{const w=$('#pvw').clientWidth||300;R.setSize(w,320);cam.aspect=w/
 R.setAnimationLoop(()=>{C.update();R.render(sc,cam)});
 function img(p){return new Promise(r=>{if(!p.data)return r(p.img?null:LK.demo());const i=new Image();i.onload=()=>r(i);i.src=p.data})}
 async function build(){if(!s)return;if(g)sc.remove(g);g=LK.garment(s,await img(s));LK.tint(g,LK.colors(s.colors)[0].h);sc.add(g);fit()}
-function pickP(id){s=L.find(x=>x.id==id);$('#ed').hidden=false;$('#ty').value=s.type;$('#co').value=s.colors;$('#lk').value=s.link||'';list();build()}
+function pickP(id){s=L.find(x=>x.id==id);$('#ed').hidden=false;$('#ty').value=s.type;$('#co').value=s.colors;$('#lk').value=s.link||'';$('#sz').value=s.sizes??(s.type=='aksesoris'?'':'S/M/L/XL/XXL');list();build()}
 $('#mine').onclick=e=>{const b=e.target.closest('button');if(b)pickP(b.dataset.i)};
-$('#ty').onchange=()=>{s.type=$('#ty').value;list();build()};$('#co').oninput=()=>{s.colors=$('#co').value;build()};$('#lk').oninput=()=>s.link=$('#lk').value;
+$('#ty').onchange=()=>{s.type=$('#ty').value;list();build()};$('#co').oninput=()=>{s.colors=$('#co').value;build()};$('#lk').oninput=()=>s.link=$('#lk').value;$('#sz').oninput=()=>s.sizes=$('#sz').value;
 $('#fi').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{s.data=r.result;build()};r.readAsDataURL(f)};
 $('#vw').onclick=e=>{const b=e.target.closest('button');if(!b||!g)return;[...$('#vw').children].forEach(x=>x.classList.toggle('on',x==b));g.rotation.y=+b.dataset.r};
 $('#rm').onclick=()=>{L=L.filter(x=>x!=s);s=null;$('#ed').hidden=true;list()};
