@@ -1,28 +1,152 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Locker Room — FVCK THE RULES</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="ui.css">
-<style>html,body{height:100%;overflow:hidden}[hidden]{display:none!important}
-#hud{font-family:'Barlow Condensed',sans-serif;position:fixed;top:14px;left:16px;font-weight:800;font-size:18px;letter-spacing:.12em;pointer-events:none}#hud small{display:block;color:var(--o);font-size:11px}
-#cb{position:fixed;top:12px;right:14px;background:#000a;backdrop-filter:blur(10px)}#cb b{color:var(--o)}
-#nav{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom))}#nav button{padding:8px 13px}
-#lab{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);color:#cfd3d6;font-size:13px;letter-spacing:.1em;text-transform:uppercase;pointer-events:none;text-align:center}
-#tip{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);padding:8px 16px;font-size:12px;max-width:92vw;text-align:center;border-radius:18px}
-#card,#sheet>div{background:rgba(250,248,244,.9);backdrop-filter:blur(22px) saturate(1.3);color:#111;border-radius:24px;padding:18px;border:1px solid #fff6}body::after{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,#000b 100%)}
-#card{position:fixed;right:14px;top:60px;width:min(300px,calc(100vw - 28px));box-shadow:0 20px 50px #0008;transform:translateX(120%);transition:transform .5s}#card.on{transform:none}
-#card small{color:#777;font-size:12px;text-transform:uppercase;letter-spacing:.08em}#card h1{font-size:23px;line-height:1.05;font-weight:800;margin:2px 0}
-.top{display:flex;justify-content:space-between;align-items:center}.top button,#cx{font:inherit;border:1px solid #0002;background:#fff;color:#111;border-radius:99px;padding:3px 12px;cursor:pointer}
-#sw{display:flex;gap:8px;margin:6px 0 10px}#sw i{width:24px;height:24px;border-radius:50%;border:2px solid #0003;cursor:pointer}#sw i.on{box-shadow:0 0 0 2px #fff,0 0 0 4px #111}
-#card .pill{justify-content:center;margin-bottom:10px}#card .pill button{padding:6px 10px}
-.sz{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 12px}.sz button{font:inherit;padding:9px;border:1px solid #0002;border-radius:10px;background:#fff;color:#111;cursor:pointer}.sz .on{background:#111;color:#fff}
-#add{width:100%;padding:13px;border:0;border-radius:99px;background:#111;color:#fff;font:inherit;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}#add.ok{background:#2f9e44}
-#vc{display:block;text-align:center;margin-top:8px;cursor:pointer}
-#sheet{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center}#sheet>div{width:min(380px,92vw);max-height:80vh;overflow:auto}#sheet h1{margin-bottom:8px}
-.ci{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #0002}#sheet .b{margin-top:12px;color:#000}
-@media(max-width:700px){#card{top:auto;bottom:66px;right:7px;left:7px;width:auto;max-height:50vh;overflow:auto}}</style></head><body>
-<canvas id="c"></canvas>
-<div id="hud">FVCK THE RULES<small>LOCKER ROOM · VIRTUAL STORE</small></div>
-<button class="b" id="cb">Cart <b id="ct">0</b></button>
-<div id="lab"></div><div id="tip" class="pill" hidden>Geser = lihat sekeliling / geser rel · klik tab = pindah zona · klik baju = detail</div>
-<div class="pill" id="nav"><button data-t="store" class="on">Store</button><button data-t="hoodie">Hoodie</button><button data-t="kaos">Kaos</button><button data-t="aksesoris">Aksesoris</button><button id="i">i</button></div>
-<div id="card"><div class="top"><small id="k"></small><span><button id="pv">←</button> <button id="nx">→</button> <button id="x">×</button></span></div>
-<h1 id="n"></h1><div id="p"></div><small id="l"></small><div id="sw"></div>
-<div class="pill" id="vw"><button data-r="0" class="on">Depan</button><button data-r="3.1416">Belakang</button><button data-r="1.5708">Kiri</button><button data-r="-1.5708">Kanan</button></div>
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Locker Room — FVCK THE RULES</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@1,800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<style>
+:root{--ink:#111;--pap:rgba(250,249,246,.88);--ln:rgba(0,0,0,.14);--mut:#777;--on:#fff;--ok:#2f9e44}
+*{box-sizing:border-box}html,body{height:100%;margin:0;overflow:hidden;background:#ecebe7;font:500 13px Inter,system-ui,sans-serif;color:var(--ink)}
+[hidden]{display:none!important}button{font:inherit;color:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:2px solid #3b82f6;outline-offset:2px}
+#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#hud{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);text-align:center;pointer-events:none;font:italic 800 17px 'Barlow Condensed','Arial Narrow',sans-serif;color:#111;white-space:nowrap}
+#hud small{display:block;font:500 6.5px Inter,sans-serif;letter-spacing:.22em;text-transform:uppercase;color:#777;margin-top:1px}
+.glass{background:var(--pap);backdrop-filter:blur(16px) saturate(1.3);-webkit-backdrop-filter:blur(16px) saturate(1.3)}
+#cb{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:14px;border:1px solid var(--ln);border-radius:99px;padding:6px 13px}
+#nav{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 16px);display:flex;gap:2px;padding:4px;border-radius:99px;box-shadow:0 2px 16px rgba(0,0,0,.14)}
+#nav button{border:0;background:none;padding:7px 13px;border-radius:99px}#nav .on{background:var(--ink);color:var(--on)}
+#lab{position:fixed;left:50%;top:74%;transform:translateX(-50%);color:#7a7a7a;font-size:11px;pointer-events:none;text-align:center;width:90vw}
+#ld{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;color:#777;background:#ecebe7;z-index:4}
+#hint{position:fixed;left:18px;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);color:#8a8a8a;font-size:10px;align-items:center;gap:8px;display:none}
+#hint button{border:0;background:none;color:#555;font-size:10px;padding:2px 4px;text-decoration:underline}
+#nx{position:fixed;top:50%;right:calc(max(18px,3vw) + 330px);width:30px;height:30px;border-radius:50%;border:1px solid var(--ln);display:none;align-items:center;justify-content:center;transform:translateY(-50%)}
+body.det #hint,body.det #nx{display:flex}
+#card{position:fixed;right:max(18px,3vw);top:50%;width:min(300px,calc(100vw - 28px));padding:18px;border-radius:20px;border:1px solid var(--ln);box-shadow:0 18px 50px rgba(0,0,0,.18);transform:translate(130%,-50%);transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+#card.on{transform:translate(0,-50%)}#card small{color:var(--mut);font-size:10px}
+#card h1{font:600 19px/1.12 Inter,sans-serif;margin:3px 24px 4px 0}#pr{font-weight:600;font-size:15px}
+.sh{display:flex;justify-content:space-between;margin-top:14px;font-size:11px}.sh span:last-child{color:var(--mut)}
+#sz{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 14px}
+#sz button{padding:9px 0;border:1px solid var(--ln);border-radius:9px;background:transparent}#sz .on{background:var(--ink);color:var(--on);border-color:var(--ink)}#sz button:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed}
+#add{width:100%;padding:13px;border:0;border-radius:99px;background:var(--ink);color:var(--on);font-weight:600;transition:background .2s}#add.ok{background:var(--ok);color:#fff}#add:disabled{opacity:.4;cursor:not-allowed}
+#vc{display:block;margin:9px auto 0;border:0;background:none;color:var(--mut);font-size:11px}
+#x{position:absolute;top:10px;right:12px;border:0;background:none;font-size:20px;line-height:1;color:var(--mut)}
+#sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:5}
+#sheet>div{width:min(380px,92vw);max-height:84vh;overflow:auto;border-radius:20px;padding:18px;border:1px solid var(--ln)}
+.ci{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--ln)}
+#sheet input{width:100%;margin-top:8px;padding:10px;border:1px solid var(--ln);border-radius:10px;background:transparent;color:inherit;font:inherit}
+#sheet .bt{margin-top:12px;width:100%;padding:12px;border:0;border-radius:99px;background:var(--ink);color:var(--on);font-weight:600}#sheet .bt.g{background:none;color:var(--mut)}
+#fm{margin-top:8px;min-height:16px;font-size:12px}
+@media(max-width:700px){#card{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 66px);right:7px;left:7px;width:auto;transform:translateY(130%)}#card.on{transform:none}#nx{right:12px;top:34%}#hint{bottom:auto;top:calc(env(safe-area-inset-top,0px) + 52px);left:50%;transform:translateX(-50%);flex-wrap:wrap;justify-content:center;width:90vw}#nav button{padding:7px 10px}}
+@media(prefers-color-scheme:dark){:root{--ink:#f2f2ef;--pap:rgba(26,26,26,.86);--ln:rgba(255,255,255,.2);--mut:#a0a0a0;--on:#111}}
+@media(prefers-reduced-motion:reduce){#card{transition:none}}
+</style></head><body>
+<canvas id="c"></canvas><div id="ld">Loading showroom…</div>
+<div id="hud">FVCK THE RULES<small>Virtual Store</small></div>
+<button id="cb" class="glass">Cart <b id="ct">0</b></button><div id="lab"></div>
+<div id="hint"><span></span><button data-r="0">Depan</button><button data-r="3.1416">Belakang</button><button data-r="1.5708">Kiri</button><button data-r="-1.5708">Kanan</button></div>
+<button id="nx" class="glass" aria-label="Next item">→</button>
+<div id="card" class="glass"><button id="x" aria-label="Close">×</button><small id="k"></small><h1 id="n"></h1><div id="pr"></div>
+<div class="sh"><span>Select size</span><span>Size guide</span></div><div id="sz"></div>
+<button id="add">Add to Cart</button><button id="vc" hidden>View cart →</button></div>
+<nav id="nav" class="glass"><button data-z="store" class="on">Store</button><button data-z="hoodie">Hoodie</button><button data-z="kaos">Kaos</button><button data-z="aksesoris">Aksesoris</button><button id="i" aria-label="Info">i</button></nav>
+<div id="sheet" hidden><div class="glass"><div id="sl"></div></div></div>
+<script type="module">
+import * as T from 'three';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {build,MK} from './models.js';
+/* ===== Integrasi web utama: Firebase (project fvcktherules-store) + Cloudinary lewat uploadGambar ===== */
+let FB={},FS={};
+try{FB=await import('https://fucktherules.my.id/firebase.js?v=20261030');FS=await import('https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js')}catch(e){console.warn('Firebase gagal dimuat, mode demo',e)}
+const PAY='';/* isi info rekening, mis. 'BCA 123456 a/n FVCK THE RULES' */
+const $=s=>document.querySelector(s),rp=n=>'Rp '+(+n||0).toLocaleString('id-ID'),PI=Math.PI,num=q=>+(q&&typeof q=='object'?q.qty:q)||0;
+const ZN={hoodie:{a:0,t:'Hoodie'},kaos:{a:-PI/2,t:'Kaos'},aksesoris:{a:PI/2,t:'Aksesoris'}};
+const fwd=a=>new T.Vector3(-Math.sin(a),0,-Math.cos(a)),rgt=a=>new T.Vector3(Math.cos(a),0,-Math.sin(a));
+for(const k in ZN){const z=ZN[k];z.f=fwd(z.a);z.r=rgt(z.a);z.o=z.f.clone().multiplyScalar(4.9)}
+await Promise.race([document.fonts?.load('italic 800 100px "Barlow Condensed"'),new Promise(r=>setTimeout(r,2000))]).catch(()=>0);
+/* ===== Scene: ruangan putih 12x12 m, kamera berputar 360° di tengah ===== */
+const R=new T.WebGLRenderer({canvas:$('#c'),antialias:true});R.toneMapping=T.ACESFilmicToneMapping;R.toneMappingExposure=.95;R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;R.setPixelRatio(Math.min(devicePixelRatio,2));
+const S=new T.Scene();S.background=new T.Color('#ecebe7');S.environment=new T.PMREMGenerator(R).fromScene(new RoomEnvironment(),.04).texture;
+const C=new T.PerspectiveCamera(60,1,.1,50);
+const pl=new T.PointLight('#fff',48,0,2);pl.position.set(0,4,0);pl.castShadow=true;pl.shadow.mapSize.set(1024,1024);pl.shadow.bias=-.002;S.add(pl);
+const surf=(w,h,x,y,z,rx,ry,c)=>{const m=new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshStandardMaterial({color:c||'#efeeea',roughness:.95}));m.position.set(x,y,z);m.rotation.set(rx,ry,0);m.receiveShadow=true;S.add(m)};
+surf(12,12,0,0,0,-PI/2,0,'#d9d8d3');surf(12,12,0,4.4,0,PI/2,0,'#f6f5f1');
+surf(12,4.4,0,2.2,-6,0,0);surf(12,4.4,0,2.2,6,0,PI);surf(12,4.4,6,2.2,0,0,-PI/2);surf(12,4.4,-6,2.2,0,0,PI/2);
+function txt(t,w,h,px,col){const c=document.createElement('canvas');c.width=1024;c.height=Math.round(1024*h/w);const x=c.getContext('2d');x.fillStyle=col;x.font=`italic 800 ${px}px "Barlow Condensed","Arial Narrow",sans-serif`;x.textAlign='center';x.textBaseline='middle';x.fillText(t,512,c.height/2);const tx=new T.CanvasTexture(c);tx.colorSpace=T.SRGBColorSpace;tx.anisotropy=8;return new T.Mesh(new T.PlaneGeometry(w,h),new T.MeshBasicMaterial({map:tx,transparent:true}))}
+const steel=new T.MeshStandardMaterial({color:'#c9ccd0',metalness:.9,roughness:.3});
+for(const k in ZN){const z=ZN[k],g=new T.Group();g.position.copy(z.o);g.rotation.y=z.a;
+ const bar=new T.Mesh(new T.CylinderGeometry(.02,.02,7.4,12),steel);bar.rotation.z=PI/2;bar.position.y=1.95;bar.castShadow=true;g.add(bar);
+ [-3.6,3.6].forEach(x=>{const r=new T.Mesh(new T.CylinderGeometry(.008,.008,2.45,6),steel);r.position.set(x,3.17,0);g.add(r)});
+ const lg=txt('FVCK THE RULES',4.2,.8,170,'#111');lg.position.set(0,3.25,-1.05);g.add(lg);S.add(g)}
+const sg=txt('LOCKER ROOM',6,1.2,250,'#111');sg.position.set(0,2.6,5.95);sg.rotation.y=PI;S.add(sg);
+/* ===== Data: produk + aksesoris + stok + produk3d (realtime) ===== */
+const DEMO=[['Hoodie Demo','jaket','hoodie-pullover','#2b2d31'],['Zip Demo','jaket','hoodie-zip','#c4161c'],['Kaos Demo','kaos','lengan-pendek','#f0f0ec'],['Kaos Panjang','kaos','lengan-panjang','#2057b5'],['Topi Demo','aksesoris','topi','#6b4423'],['Tas Demo','aksesoris','tas','#15233f']].map((a,i)=>({id:'d'+i,nama:a[0],harga:249000+i*50000,k:a[1],s:a[2],h:a[3]}));
+let P=[],A=[],D={},ST={},items=[],gen=0,tk=0;
+if(FB.listenProduk){FB.listenProduk(l=>{P=l;sync()});FB.listenAksesoris?.(l=>{A=l;sync()},()=>{});
+ FS.onSnapshot(FS.collection(FB.db,'produk3d'),s=>{D={};s.forEach(d=>D[d.id]=d.data());sync()},()=>{});
+ FS.onSnapshot(FS.collection(FB.db,'stok'),s=>{ST={};s.forEach(d=>ST[d.id]=d.data());sync()},()=>{})}
+else{P=DEMO.filter(d=>d.k!='aksesoris');A=DEMO.filter(d=>d.k=='aksesoris');DEMO.forEach(d=>D[d.id]={kategori:d.k,subtipe:d.s,warnaHex:d.h});sync()}
+function sync(){clearTimeout(tk);tk=setTimeout(rebuild,200)}
+function sizesOf(p,acc){const m=p.stok&&typeof p.stok=='object'?p.stok:null;if(m)return Object.entries(m).map(([s,q])=>[s,num(q)]);
+ const l=Object.entries(ST).filter(([id,d])=>(d.pid||d.produkId||d.productId||id.split('_')[0])==p.id).map(([id,d])=>[d.ukuran||d.size||id.split('_').pop(),num(d)]);
+ return l.length?l:acc?[['ONE SIZE',99]]:['S','M','L','XL'].map(s=>[s,99])}
+async function rebuild(){const n=++gen,L=[...P.map(p=>({p,src:'produk'})),...A.map(p=>({p,src:'aksesoris'}))].map(x=>({...x,d:D[x.p.id]||{kategori:x.src=='aksesoris'?'aksesoris':'kaos',subtipe:x.src=='aksesoris'?'topi':'lengan-pendek',warnaHex:'#8a8a8a'}})).filter(x=>x.d.tampil!==false).sort((a,b)=>(a.d.urut||0)-(b.d.urut||0));
+ const out=await Promise.all(L.map(async({p,d})=>{const k=d.kategori=='aksesoris'?'aksesoris':d.kategori=='jaket'?'hoodie':'kaos',o=await build({...d,modelKey:d.modelKey||MK(d.kategori,d.subtipe)}),sz=sizesOf(p,k=='aksesoris'),sold=sz.every(s=>s[1]<=0);
+  if(sold)o.traverse(c=>{if(c.isMesh&&c.material.color)c.material.color.multiplyScalar(.35)});return{o,p,k,sz,sold}}));
+ if(n!==gen)return;items.forEach(m=>S.remove(m.o));items=out;
+ for(const k in ZN){const l=items.filter(m=>m.k==k),sp=Math.min(.62,6.4/Math.max(l.length,1));l.forEach((m,i)=>{m.i=i;m.x=(i-(l.length-1)/2)*sp;m.ry=(i%2?.5:-.5);m.o.userData.m=m;m.o.position.copy(z2(k,m.x));m.o.rotation.y=ZN[k].a+m.ry;S.add(m.o)})}
+ $('#ld').hidden=true;if(det)closeDet()}
+const z2=(k,x)=>{const z=ZN[k],v=z.o.clone().addScaledVector(z.r,x);v.y=1.86;return v};
+/* ===== Kamera 360° + interaksi ===== */
+let mode='store',ya=0,cy=0,sl=0,det=null,rotY=0,size=null,dn=null,moved=0;
+const card=$('#card'),add=$('#add'),vc=$('#vc'),cart=[],rc=new T.Raycaster(),cp=new T.Vector3(0,1.6,0),lk=new T.Vector3(),tp=new T.Vector3(),clk=new T.Clock();
+function rs(){const w=innerWidth,h=innerHeight;R.setSize(w,h,false);C.aspect=w/h;C.fov=w/h<1?72:60;C.updateProjectionMatrix()}addEventListener('resize',rs);rs();
+const setNav=()=>document.querySelectorAll('#nav [data-z]').forEach(b=>b.classList.toggle('on',b.dataset.z===mode));
+function go(z,x){closeDet();if(z==='store')ya=cy;mode=z;if(x!==undefined)sl=x;else if(z!=='store')sl=0;setNav()}
+function limit(){const l=items.filter(m=>m.k==mode);return Math.max(0,(l.length?Math.abs(l[0].x):0)-.4)}
+function openDet(m){det=m;rotY=0;$('#k').textContent=ZN[m.k].t;$('#n').textContent=m.p.nama;$('#pr').textContent=rp(m.p.harga);
+ size=(m.sz.find(s=>s[1]>0)||[])[0];drawSz();const l=items.filter(i=>i.k==m.k);$('#hint span').textContent=(l.indexOf(m)+1)+' of '+l.length+' · drag or pick a view to turn';
+ card.classList.add('on');document.body.classList.add('det');resetAdd()}
+function closeDet(){det=null;card.classList.remove('on');document.body.classList.remove('det')}
+function drawSz(){$('#sz').innerHTML=det.sz.map(([s,q])=>`<button${q<=0?' disabled':''}${s===size?' class="on"':''}>${s}</button>`).join('');add.disabled=!size;add.textContent=size?'Add to Cart':'Sold out'}
+function resetAdd(){if(det)add.textContent=size?'Add to Cart':'Sold out';add.classList.remove('ok');vc.hidden=true}
+$('#sz').onclick=e=>{if(e.target.tagName==='BUTTON'&&!e.target.disabled){size=e.target.textContent;drawSz();resetAdd()}};
+add.onclick=()=>{cart.push({id:det.p.id,nama:det.p.nama,size,harga:+det.p.harga||0});$('#ct').textContent=cart.length;add.textContent='Added to cart ✓';add.classList.add('ok');vc.hidden=false};
+$('#x').onclick=closeDet;$('#nx').onclick=()=>{const l=items.filter(i=>i.k==det.k);openDet(l[(l.indexOf(det)+1)%l.length])};
+$('#hint').onclick=e=>{const b=e.target.closest('button');if(b){const a=+b.dataset.r;rotY=a+PI*2*Math.round((rotY-a)/(PI*2))}};
+$('#nav').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='i')sheet('<p>Geser untuk berputar 360° di dalam ruangan. Pilih zona di bawah, ketuk baju untuk detail, lalu putar baju atau pilih tampak Depan, Belakang, Kiri, Kanan.</p><button class="bt g">Tutup</button>');else go(b.dataset.z)};
+addEventListener('keydown',e=>{if(e.key==='Escape'){$('#sheet').hidden=true;closeDet()}});
+const cv=$('#c');
+cv.onpointerdown=e=>{dn={x:e.clientX};moved=0;cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing'};
+cv.onpointermove=e=>{if(!dn)return;const dx=e.clientX-dn.x;dn.x=e.clientX;moved+=Math.abs(dx);if(moved<6)return;
+ if(det)rotY+=dx*.012;else if(mode==='store')ya+=dx*.006;else sl=T.MathUtils.clamp(sl-dx*.012,-limit(),limit())};
+cv.onpointerup=e=>{cv.style.cursor='grab';if(dn&&moved<6)pick(e);dn=null};
+function pick(e){if(det)return;rc.setFromCamera(new T.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1),C);
+ const h=rc.intersectObjects(items.map(m=>m.o),true)[0];if(!h)return;let o=h.object;while(o&&!o.userData.m)o=o.parent;if(!o)return;
+ const m=o.userData.m;if(mode==='store')go(m.k,m.x);else if(m.k===mode)openDet(m)}
+/* ===== Loop ===== */
+function loop(){requestAnimationFrame(loop);const dt=Math.min(clk.getDelta(),.05),t=clk.elapsedTime;
+ if(mode==='store'){if(!dn)ya+=dt*.1;tp.set(0,1.6,0);cy+=(ya-cy)*.18}
+ else{const z=ZN[mode],b=z.a+PI*2*Math.round((cy-z.a)/(PI*2));cy+=(b-cy)*.07;tp.copy(z.f).multiplyScalar(1.7).addScaledVector(z.r,sl);tp.y=1.6}
+ cp.lerp(tp,.06);C.position.copy(cp);lk.copy(cp).addScaledVector(fwd(cy),3);lk.y=1.4;C.lookAt(lk);
+ const wide=innerWidth>700;
+ items.forEach(m=>{const z=ZN[m.k],o=m.o;let q=z2(m.k,m.x),s=1,ry=z.a+m.ry;
+  if(m===det){q=z.f.clone().multiplyScalar(3.9).addScaledVector(z.r,sl+(wide?-.6:0));q.y=wide?2.3:2.8;s=1.7;ry=z.a+rotY}
+  o.position.lerp(q,.12);o.scale.setScalar(o.scale.x+(s-o.scale.x)*.12);o.rotation.y+=(ry-o.rotation.y)*.14;o.rotation.z=m===det?Math.sin(t)*.01:Math.sin(t*1.1+m.i)*.012});
+ $('#lab').textContent=mode==='store'||det?'':ZN[mode].t;
+ R.render(S,C)}
+loop();
+/* ===== Cart + checkout (order status pending, sumber 3d-showroom) ===== */
+function sheet(h){$('#sl').innerHTML=h;$('#sheet').hidden=false}
+function showCart(){const tot=cart.reduce((s,c)=>s+c.harga,0);
+ sheet(cart.length?cart.map(c=>`<div class="ci"><span>${c.nama} · ${c.size}</span><span>${rp(c.harga)}</span></div>`).join('')+`<div class="ci"><b>Total</b><b>${rp(tot)}</b></div>${PAY?`<p>${PAY}</p>`:''}
+ <input id="fn" placeholder="Nama"><input id="fw" placeholder="WhatsApp" inputmode="tel"><input id="fa" placeholder="Alamat lengkap"><input id="fb" type="file" accept="image/*" aria-label="Bukti bayar">
+ <button class="bt" id="send">Kirim pesanan</button><div id="fm"></div><button class="bt g">Tutup</button>`:'<p>Your cart is empty.</p><button class="bt g">Tutup</button>')}
+vc.onclick=showCart;$('#cb').onclick=showCart;
+$('#sheet').onclick=async e=>{if(e.target.id==='sheet'||e.target.classList.contains('g'))$('#sheet').hidden=true;
+ if(e.target.id!=='send')return;const n=$('#fn').value.trim(),w=$('#fw').value.trim(),a=$('#fa').value.trim(),f=$('#fb').files[0],ms=$('#fm');
+ if(!n||!w||!a){ms.textContent='Lengkapi nama, WhatsApp, dan alamat.';return}ms.textContent='Mengirim…';
+ try{const bukti=f&&FB.uploadGambar?await FB.uploadGambar(f,'bukti')||'':'',
+  o={sumber:'3d-showroom',status:'pending',nama:n,wa:w,alamat:a,bukti,total:cart.reduce((s,c)=>s+c.harga,0),items:cart.map(c=>({id:c.id,nama:c.nama,ukuran:c.size,qty:1,harga:c.harga})),createdAt:FS.serverTimestamp()};
+  if(FB.saveOrder)await FB.saveOrder(o);else await FS.addDoc(FS.collection(FB.db,'orders'),o);
+  cart.length=0;$('#ct').textContent=0;ms.textContent='✓ Pesanan terkirim. Admin konfirmasi ongkir lewat WhatsApp.'}catch(err){ms.textContent='Gagal: '+(err.code||err.message)}};
+</script></body></html>
