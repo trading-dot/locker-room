@@ -1,29 +1,19 @@
-# Rail — rak baju 3D (GitHub Pages)
+# FVCKTHERULES — 3D Showroom
+Situs ketiga (HTML/JS murni, tanpa build). Tidak punya katalog sendiri: produk, harga, stok, order memakai `https://fucktherules.my.id/firebase.js` (project `fvcktherules-store`). Data tambahan 3D ada di koleksi `produk3d` (ID dokumen = ID produk/aksesoris).
 
-**Mesin 3D baru (WebGL2):** `rail-core.js` sekarang membentuk mesh bervolume dari siluet gambar (bukan lagi lembaran bertumpuk): ada ketebalan, tepi membulat, lipatan kain menjuntai dari gantungan, pencahayaan, gantungan kayu 3D, dan kain "tertinggal" saat diputar. Tanpa library eksternal (tidak perlu three.js). Gambar WAJIB PNG transparan (siluet diambil dari alpha); kalau background-nya tidak transparan, bajunya jadi kotak.
+## Deploy (urutan penting)
+1. Firebase Console → Firestore → Rules → tempel isi `firestore.rules` (rules lama + blok `produk3d`) → Publish.
+2. GitHub → repo baru `fvcktherules-3d` (Public) → upload ISI folder ini ke `main`.
+3. Settings → Pages → main / (root) → Custom domain `3d.fucktherules.my.id` → Enforce HTTPS.
+4. DNS: CNAME host `3d` → `<username-github>.github.io`.
+5. Firebase → Authentication → Settings → Authorized domains → tambah `3d.fucktherules.my.id`.
+6. Google Cloud → Credentials → API key: jika ada referrer restriction, tambah `https://3d.fucktherules.my.id/*`.
+7. Buka `/admin3d.html` → login admin → pilih produk → kategori → sub-tipe → upload desain → Simpan.
 
-File: `index.html` (tampilan), `admin.html` (pengaturan), `rail-core.js`, `templates/*.png`, `CNAME`, `.nojekyll`.
-Memakai `firebase.js` toko utama (produk, login admin, upload Cloudinary) — tidak ada katalog baru.
+## Cara kerja
+- Admin: pilih produk dari web utama, kategori (Jaket/Kaos/Aksesoris), sub-tipe (lengan pendek/panjang, hoodie, dst), upload banyak PNG sekaligus (nama file memuat depan/belakang/kiri/kanan), atur posisi dengan preview 3D, Simpan.
+- Showroom: baca `produk` + `aksesoris` + `stok` + `produk3d` realtime. Ukuran dari field `stok`, SOLD OUT digelapkan. Checkout: bayar → upload bukti → `saveOrder` (status pending, sumber `3d-showroom`).
+- Model: prosedural (kain di-extrude, bevel, tessellate, lipatan, bump anyaman). Taruh `.glb` di `assets/models/` untuk kualitas lebih tinggi (otomatis dipakai).
 
-## WAJIB: tambah rules Firestore (di project fvcktherules-store)
-Tempel di `firestore.rules` toko utama, di dalam `match /documents { ... }` dekat `match /produk`, lalu Publish:
-
-    match /rail/{document=**} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-## Format gambar (atlas)
-PNG transparan **3200×800 px** = 4 kotak persegi **800×800** berurutan kiri→kanan:
-`DEPAN | KANAN | BELAKANG | KIRI`. Tanpa gantungan, tanpa background, barang di tengah, sisakan margin ≥20px; bagian atas barang di sekitar y=50 agar pas di gantungan.
-Satu file per warna. Jenis: `kaos` (lengan pendek), `kaos-panjang`, `hoodie`, `aksesoris`. Mockup hitam/putih siap pakai ada di `mockups/` (nama `mockup-<jenis>-<hitam|putih>.png`). Pakai `templates/template-kaos|kaos-panjang|hoodie|aksesoris.png` sebagai panduan (sembunyikan layer panduan saat export).
-
-
-## Tampilan
-Awal: semua baju berjejer tampak samping di gantungan. Ketuk / geser dua jari / panah → baju terpilih berputar menghadap depan & membesar. Tombol Depan/Belakang & ↺↻ memutar halus (3D, ada ketebalan). Seret baju terpilih untuk memutar bebas. Ketuk area kosong / Esc → kembali berjejer.
-
-## Format BARU: lembar pola (lebih gampang)
-PNG transparan **1600×800 px** = 2 kotak 800×800: `DEPAN | BELAKANG`. Tidak perlu gambar samping — sisi & ketebalan dibuat otomatis oleh 3D, jadi putaran depan→samping→belakang halus.
-Pakai `pola/template-pola-<jenis>.png` (biru, seperti template kit) sebagai panduan, hasilnya export tanpa layer panduan. Contoh siap pakai: `pola/pola-<jenis>-<hitam|putih>.png`.
-Format lama 4 kotak (3200×800) tetap jalan; sistem otomatis mendeteksi dari rasio gambar (hanya kotak DEPAN dan BELAKANG yang dipakai, sisi samping dibuat 3D).
-Tips realistis: pakai foto baju asli (depan & belakang, PNG transparan, posisi digantung rata) di kotak DEPAN/BELAKANG — kain, kerutan, dan print asli ikut terbungkus ke mesh 3D.
+## Belum ada
+Ongkir otomatis (Biteship), voucher, login pelanggan, fallback 2D jika WebGL gagal, atlas desain tunggal. Ongkir dikonfirmasi admin lewat WhatsApp.

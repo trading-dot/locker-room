@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Admin 3D — FVCKTHERULES</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#eeece6;font:14px Inter,system-ui,sans-serif;color:#14130e;padding:14px;max-width:760px;margin:auto}
+h1{font:700 28px Gaegu,cursive;margin:4px 0 10px}label{display:block;font-weight:600;margin:12px 0 4px}small{font-weight:400;opacity:.65}
+select,input:not([type=checkbox]):not([type=range]):not([type=color]){width:100%;padding:11px;border:1px solid #d8d4c8;border-radius:12px;background:#fff;font:inherit}
+input[type=range]{width:100%}input[type=color]{width:60px;height:40px;border:0;background:none}
+canvas{width:100%;height:340px;border-radius:20px;background:#f6f5f1;touch-action:none;display:block}
+button{border:0;border-radius:99px;padding:13px 20px;background:#14130e;color:#fff;font:700 14px inherit;cursor:pointer;margin:12px 8px 0 0}button.g{background:#fff;color:#14130e}
+.box{background:#fff;border-radius:18px;padding:14px;margin-top:12px}#msg,#st{margin:8px 0;min-height:18px}
+</style></head><body>
+<h1>admin 3D showroom</h1>
+<div id="login" class="box"><label>Email admin</label><input id="em" type="email"><label>Password</label><input id="pw" type="password"><button id="li">Masuk</button><p id="le"></p></div>
+<div id="app" hidden>
+  <canvas id="pv"></canvas><small>Drag untuk memutar preview.</small>
+  <label>1. Pilih produk <small>(dari web utama)</small></label><select id="pid"></select>
+  <label>2. Kategori</label><select id="kat"><option value="jaket">Jaket</option><option value="kaos">Kaos</option><option value="aksesoris">Aksesoris</option></select>
+  <label>3. Sub-tipe</label><select id="sbt"></select>
+  <label>Warna kain</label><input type="color" id="hex" value="#8a8a8a">
+  <label>4. Upload paket desain sekaligus <small>(PNG/WebP transparan; nama file memuat: depan, belakang, kiri, kanan)</small></label><input type="file" id="fl" multiple accept="image/png,image/webp">
+  <div id="st"></div>
+  <div class="box"><label>Atur posisi desain</label><select id="dk"><option value="depan">Depan</option><option value="belakang">Belakang</option><option value="lenganKiri">Lengan kiri</option><option value="lenganKanan">Lengan kanan</option></select>
+  <label>Geser X</label><input type="range" id="dx" min="-.6" max=".6" step=".005"><label>Geser Y</label><input type="range" id="dy" min="-.85" max=".1" step=".005">
+  <label>Ukuran</label><input type="range" id="ds" min=".04" max=".5" step=".005"><label>Putar</label><input type="range" id="dr" min="-180" max="180" step="1"></div>
+  <label>Urutan di rak <small>(kecil = paling kiri)</small></label><input type="number" id="ur" value="0">
+  <label><input type="checkbox" id="tp" checked> Tampilkan di showroom</label>
+  <button id="sv">Simpan</button><button class="g" id="rm">Hapus dari showroom</button><button class="g" id="lo">Keluar</button><p id="msg"></p>
+</div>
+<script type="module">
+import * as T from 'three';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {build,dd,MK} from './models.js';
+import * as FB from 'https://fucktherules.my.id/firebase.js?v=20261030';
+import {collection,onSnapshot,doc,setDoc,deleteDoc,serverTimestamp} from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+import {signInWithEmailAndPassword,signOut,onAuthStateChanged} from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
+const $=s=>document.querySelector(s),SUB={jaket:['hoodie-zip','hoodie-pullover','bomber','windbreaker'],kaos:['lengan-pendek','lengan-panjang'],aksesoris:['topi','syal','tas','lainnya']};
+let P=[],A=[],D={},tex={},decal={},old=null,tm=0;
+// login (akun admin yang sama dengan web utama, via adminAuth)
+$('#li').onclick=async()=>{try{await signInWithEmailAndPassword(FB.adminAuth,$('#em').value.trim(),$('#pw').value)}catch(e){$('#le').textContent='Login gagal: '+(e.code||e.message)}};
+$('#lo').onclick=()=>signOut(FB.adminAuth);
+onAuthStateChanged(FB.adminAuth,u=>{$('#login').hidden=!!u;$('#app').hidden=!u});
+// data
+FB.listenProduk(l=>{P=l;opts()});FB.listenAksesoris(l=>{A=l;opts()},()=>{});
+onSnapshot(collection(FB.db,'produk3d'),s=>{D={};s.forEach(d=>D[d.id]=d.data());opts()});
+function opts(){const cur=$('#pid').value;$('#pid').innerHTML=[...P.map(p=>['produk',p]),...A.map(p=>['aksesoris',p])].map(([s,p])=>`<option value="${s}:${p.id}">${s=='aksesoris'?'[Aksesoris] ':''}${p.nama}${D[p.id]?' ✓':' (belum diatur)'}</option>`).join('');if(cur)$('#pid').value=cur;if(!old)load()}
+function subs(v){$('#sbt').innerHTML=SUB[$('#kat').value].map(s=>`<option>${s}</option>`).join('');if(v)$('#sbt').value=v}
+function load(){const id=$('#pid').value.split(':')[1],d=D[id];tex={...(d?.tex||{})};decal=JSON.parse(JSON.stringify(d?.decal||{}));
+  $('#kat').value=d?.kategori||'kaos';subs(d?.subtipe);$('#hex').value=d?.warnaHex||'#8a8a8a';$('#ur').value=d?.urut||0;$('#tp').checked=d?.tampil!==false;sliders();prev()}
+function item(){return{kategori:$('#kat').value,subtipe:$('#sbt').value,warnaHex:$('#hex').value,tex,decal,modelKey:MK($('#kat').value,$('#sbt').value)}}
+function sliders(){const k=$('#dk').value,d={...dd(item())[k],...(decal[k]||{})};$('#dx').value=d.x;$('#dy').value=d.y;$('#ds').value=d.s;$('#dr').value=d.r}
+$('#pid').onchange=load;$('#kat').onchange=()=>{subs();sliders();prev()};$('#sbt').onchange=()=>{sliders();prev()};$('#hex').oninput=prev;$('#dk').onchange=sliders;
+['dx','dy','ds','dr'].forEach(i=>$('#'+i).oninput=()=>{decal[$('#dk').value]={x:+$('#dx').value,y:+$('#dy').value,s:+$('#ds').value,r:+$('#dr').value};prev()});
+// upload banyak file sekaligus -> Cloudinary (uploadGambar milik web utama)
+$('#fl').onchange=async e=>{const st=$('#st');st.textContent='';for(const f of e.target.files){const n=f.name.toLowerCase(),k=/belakang|back/.test(n)?'belakang':/kiri|left/.test(n)?'lenganKiri':/kanan|right/.test(n)?'lenganKanan':/depan|front/.test(n)?'depan':null;
+  if(!k){st.textContent+=`✗ ${f.name}: nama harus memuat depan/belakang/kiri/kanan. `;continue}
+  st.textContent+=`… ${k} `;const u=await FB.uploadGambar(f,'produk');if(u){tex[k]=u;st.textContent+=`✓ `}else st.textContent+=`✗ gagal `;prev()}};
+// preview 3D
+const cv=$('#pv'),R=new T.WebGLRenderer({canvas:cv,antialias:true});R.toneMapping=T.ACESFilmicToneMapping;R.setPixelRatio(Math.min(devicePixelRatio,2));
+const S=new T.Scene();S.background=new T.Color('#f6f5f1');S.environment=new T.PMREMGenerator(R).fromScene(new RoomEnvironment(),.04).texture;
+const L=new T.DirectionalLight('#fff',1.5);L.position.set(1,2,3);S.add(L);const cam=new T.PerspectiveCamera(36,1,.1,20);cam.position.set(0,-.3,2.2);cam.lookAt(0,-.38,0);
+function rs(){const w=cv.clientWidth,h=cv.clientHeight;R.setSize(w,h,false);cam.aspect=w/h;cam.updateProjectionMatrix()}addEventListener('resize',rs);rs();
+let spin=0,dr=0;cv.onpointerdown=e=>{dr=e.clientX;cv.setPointerCapture(e.pointerId)};cv.onpointermove=e=>{if(e.buttons){spin+=(e.clientX-dr)*.01;dr=e.clientX;if(old)old.rotation.y=spin}};
+function prev(){clearTimeout(tm);tm=setTimeout(async()=>{rs();const n=await build(item());if(old)S.remove(old);old=n;old.rotation.y=spin;S.add(old)},150)}
+R.setAnimationLoop(()=>R.render(S,cam));
+// simpan ke koleksi produk3d (ID dokumen = ID produk/aksesoris di web utama)
+$('#sv').onclick=async()=>{const[s,id]=$('#pid').value.split(':'),m=$('#msg');if(!id)return m.textContent='Pilih produk dulu.';
+  try{await setDoc(doc(FB.adminDb,'produk3d',id),{pid:id,sumber:s,...item(),urut:+$('#ur').value||0,tampil:$('#tp').checked,updatedAt:serverTimestamp()});m.textContent='✓ Tersimpan. Showroom langsung berubah.'}
+  catch(e){m.textContent='✗ '+(e.code=='permission-denied'?'Ditolak rules: publish firestore.rules dulu / bukan akun admin.':e.message)}};
+$('#rm').onclick=async()=>{const id=$('#pid').value.split(':')[1];if(!id||!confirm('Hapus dari showroom 3D? (produk di web utama tidak terhapus)'))return;
+  try{await deleteDoc(doc(FB.adminDb,'produk3d',id));$('#msg').textContent='✓ Dihapus dari showroom.'}catch(e){$('#msg').textContent='✗ '+e.message}};
+</script></body></html>

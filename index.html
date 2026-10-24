@@ -1,95 +1,129 @@
-<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Locker Room — FVCK THE RULES</title>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="ui.css">
-<style>html,body{height:100%;overflow:hidden}[hidden]{display:none!important}
-#hud{position:fixed;top:14px;left:16px;font-weight:800;font-size:18px;letter-spacing:.12em;pointer-events:none}#hud small{display:block;color:var(--o);font-size:11px}
-#cb{position:fixed;top:12px;right:14px;background:#000a;backdrop-filter:blur(10px)}#cb b{color:var(--o)}
-#nav{position:fixed;left:50%;transform:translateX(-50%);bottom:max(14px,env(safe-area-inset-bottom))}#nav button{padding:8px 13px}
-#lab{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);color:#cfd3d6;font-size:13px;letter-spacing:.1em;text-transform:uppercase;pointer-events:none;text-align:center}
-#tip{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);padding:8px 16px;font-size:12px;max-width:92vw;text-align:center;border-radius:18px}
-#card,#sheet>div{background:#f7f5f0;color:#111;border-radius:18px;padding:16px}
-#card{position:fixed;right:14px;top:60px;width:min(300px,calc(100vw - 28px));box-shadow:0 20px 50px #0008;transform:translateX(120%);transition:transform .5s}#card.on{transform:none}
-#card small{color:#777;font-size:12px;text-transform:uppercase;letter-spacing:.08em}#card h1{font-size:23px;line-height:1.05;font-weight:800;margin:2px 0}
-.top{display:flex;justify-content:space-between;align-items:center}.top button,#cx{font:inherit;border:1px solid #0002;background:#fff;color:#111;border-radius:99px;padding:3px 12px;cursor:pointer}
-#sw{display:flex;gap:8px;margin:6px 0 10px}#sw i{width:24px;height:24px;border-radius:50%;border:2px solid #0003;cursor:pointer}#sw i.on{box-shadow:0 0 0 2px #fff,0 0 0 4px #111}
-#card .pill{justify-content:center;margin-bottom:10px}#card .pill button{padding:6px 10px}
-.sz{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:6px 0 12px}.sz button{font:inherit;padding:9px;border:1px solid #0002;border-radius:10px;background:#fff;color:#111;cursor:pointer}.sz .on{background:#111;color:#fff}
-#add{width:100%;padding:13px;border:0;border-radius:99px;background:#111;color:#fff;font:inherit;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}#add.ok{background:#2f9e44}
-#vc{display:block;text-align:center;margin-top:8px;cursor:pointer}
-#sheet{position:fixed;inset:0;background:#000a;display:flex;align-items:center;justify-content:center}#sheet>div{width:min(380px,92vw);max-height:80vh;overflow:auto}#sheet h1{margin-bottom:8px}
-.ci{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #0002}#sheet .b{margin-top:12px;color:#000}
-@media(max-width:700px){#card{top:auto;bottom:66px;right:7px;left:7px;width:auto;max-height:50vh;overflow:auto}}</style></head><body>
+<!DOCTYPE html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>FVCKTHERULES — 3D Showroom</title>
+<link rel="icon" href="https://fucktherules.my.id/favicon.png"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Gaegu:wght@700&display=swap" rel="stylesheet">
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<style>
+:root{--bg:#eeece6;--ink:#14130e;--y:#f6c800}*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font:14px Inter,system-ui,sans-serif;color:var(--ink)}
+canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+button{font:inherit;cursor:pointer}.pill{border:0;border-radius:99px;padding:9px 16px;background:#fff;color:var(--ink);font-weight:600}.pill.on{background:var(--ink);color:#fff}
+header{position:fixed;top:max(12px,env(safe-area-inset-top));left:16px;right:16px;display:flex;justify-content:space-between;align-items:center}
+.brand{font:700 28px Gaegu,cursive}.brand small{font:600 11px Inter;opacity:.6;margin-left:6px}
+#tabs,#sub{position:fixed;left:50%;transform:translateX(-50%);display:flex;gap:4px;padding:5px;border-radius:99px;background:rgba(255,255,255,.85);backdrop-filter:blur(10px);max-width:96vw;overflow-x:auto}
+#tabs{bottom:max(16px,env(safe-area-inset-bottom))}#sub{bottom:calc(max(16px,env(safe-area-inset-bottom)) + 52px)}
+#card{position:fixed;right:16px;top:70px;width:310px;background:#fff;border-radius:22px;padding:18px;box-shadow:0 10px 40px #0002}
+#card h3{margin:2px 0 6px;font-size:18px}#card small{opacity:.6}.bd{font-size:11px;background:var(--y);padding:2px 8px;border-radius:99px;font-weight:700}
+.sz{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}.sz button{padding:9px 14px;border:1px solid #ddd;border-radius:10px;background:#fff;font-weight:600}.sz .on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.add{width:100%;border:0;border-radius:99px;padding:14px;background:var(--ink);color:#fff;font-weight:700}.add:disabled{opacity:.4}.add.ok{background:#1f9d55}
+#sheet{position:fixed;inset:0;background:#0006;display:none;align-items:flex-end;justify-content:center}#sheet.on{display:flex}
+#sb{background:var(--bg);width:min(520px,100%);max-height:92vh;overflow:auto;border-radius:22px 22px 0 0;padding:18px}
+#sb input{width:100%;padding:11px;border:1px solid #d8d4c8;border-radius:12px;margin:4px 0;font:inherit;background:#fff}
+.ln{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #0001}.ln span{flex:1}.ln small{display:block;opacity:.6}.ln button{border:0;background:none;font-size:16px}
+.er{color:#c0392b;min-height:18px}#empty{position:fixed;inset:0;display:grid;place-items:center;text-align:center;pointer-events:none;opacity:.6;padding:30px}
+#toast{position:fixed;left:50%;top:70px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:99px;opacity:0;transition:.3s;pointer-events:none}#toast.on{opacity:1}
+@media(max-width:640px){#card{left:12px;right:12px;top:auto;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 56px);width:auto}#sub{display:none!important}}
+</style></head><body>
 <canvas id="c"></canvas>
-<div id="hud">FVCK THE RULES<small>LOCKER ROOM · VIRTUAL STORE</small></div>
-<button class="b" id="cb">Cart <b id="ct">0</b></button>
-<div id="lab"></div><div id="tip" class="pill" hidden>Geser = lihat sekeliling / geser rel · klik tab = pindah zona · klik baju = detail</div>
-<div class="pill" id="nav"><button data-t="store" class="on">Store</button><button data-t="hoodie">Hoodie</button><button data-t="kaos">Kaos</button><button data-t="aksesoris">Aksesoris</button><button id="i">i</button></div>
-<div id="card"><div class="top"><small id="k"></small><span><button id="pv">←</button> <button id="nx">→</button> <button id="x">×</button></span></div>
-<h1 id="n"></h1><div id="p"></div><small id="l"></small><div id="sw"></div>
-<div class="pill" id="vw"><button data-r="0" class="on">Depan</button><button data-r="3.1416">Belakang</button><button data-r="1.5708">Kiri</button><button data-r="-1.5708">Kanan</button></div>
-<small id="szt">Select size</small><div class="sz" id="sz"></div><button id="add">Add to cart</button><a id="vc" hidden>View cart →</a></div>
-<div id="sheet" hidden><div><h1>Keranjang</h1><div id="cl2"></div><a id="co" class="b p" target="_blank" rel="noopener">Checkout di web utama →</a> <button id="cx">Tutup</button></div></div>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-<script src="core.js"></script>
-<script>
-const MAIN='https://fucktherules.my.id',$=s=>document.querySelector(s),V=THREE.Vector3,esc=s=>String(s).replace(/[&<>"]/g,c=>'&#'+c.charCodeAt(0)+';'),
-rp=v=>{const d=String(v||'').replace(/\D/g,'');return d?'Rp '+(+d).toLocaleString('id-ID'):String(v||'')};
-const R=new THREE.WebGLRenderer({antialias:true,canvas:$('#c')});R.setPixelRatio(Math.min(devicePixelRatio,2));R.outputEncoding=THREE.sRGBEncoding;R.toneMapping=THREE.ACESFilmicToneMapping;
-const sc=new THREE.Scene(),cam=new THREE.PerspectiveCamera(55,1,.1,60);sc.background=new THREE.Color('#0c1113');sc.fog=new THREE.Fog('#0c1113',9,20);
-LK.room(sc);sc.add(new THREE.HemisphereLight('#cfe3ff','#2a2018',.7));
-const C=new THREE.OrbitControls(cam,$('#c'));cam.position.set(0,2.1,4.4);C.target.set(0,1.7,0);C.enableDamping=true;C.enablePan=false;C.minDistance=1;C.maxDistance=6;C.minPolarAngle=.7;C.maxPolarAngle=1.85;
-let P=[],mode='store',zn=null,sel=null,ry=0,tw=null,cart=[];try{cart=JSON.parse(localStorage.lkc||'[]')}catch(e){}
-const Z={};[['hoodie','HOODIE',-3.8,-3.6,0],['kaos','KAOS',3.8,-3.6,0],['aksesoris','AKSESORIS',-5.9,0,Math.PI/2]].forEach(([t,l,x,z,r])=>Z[t]={g:LK.zone(sc,l,x,z,r),items:[],zx:0,sp:.7});
-const imgs={},gi=p=>imgs[p.id]??=new Promise(r=>{if(!p.img&&!p.data)return r(LK.demo());const i=new Image();i.crossOrigin='anonymous';i.onload=()=>r(i);i.onerror=()=>r(LK.demo());i.src=p.data||p.img});
-const blob=(()=>{const c=document.createElement('canvas');c.width=c.height=128;const x=c.getContext('2d'),g=x.createRadialGradient(64,64,4,64,64,62);g.addColorStop(0,'rgba(0,0,0,.55)');g.addColorStop(1,'rgba(0,0,0,0)');x.fillStyle=g;x.fillRect(0,0,128,128);return new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthWrite:false})})();
-async function build(){for(const t in Z){const z=Z[t],L=P.filter(p=>p.type==t),n=L.length;z.sp=Math.min(.7,6.4/Math.max(n,1));
- for(let i=0;i<n;i++){const p=L[i],g=LK.garment(p,await gi(p)),h=LK.hanger(),o=new THREE.Group(),b=new THREE.Mesh(new THREE.PlaneGeometry(1.1,1.5),blob);
-  LK.tint(g,LK.colors(p.colors)[0].h);h.position.y=g.userData.top;b.position.set(0,-.05,-.55);b.userData.keep=1;o.add(g,h,b);
-  o.userData={p,g,x:(i-(n-1)/2)*z.sp,ci:0};o.scale.setScalar(.62);z.g.add(o);z.items.push(o)}}}
-const fade=(o,a)=>o.traverse(m=>{if(m.material&&!m.userData.keep){m.material.transparent=true;m.material.opacity=a}});
-function fly(pos,tgt,ms=1000){const p0=cam.position.clone(),t0=C.target.clone(),s=performance.now();tw=()=>{const k=Math.min(1,(performance.now()-s)/ms),e=1-Math.pow(1-k,3);cam.position.lerpVectors(p0,pos,e);C.target.lerpVectors(t0,tgt,e);return k<1}}
-const tabs=t=>[...$('#nav').children].forEach(b=>b.classList.toggle('on',b.dataset.t==t));
-function go(t){sc.updateMatrixWorld(true);if(sel){Object.values(Z).forEach(z=>z.items.forEach(o=>fade(o,1)));sel=null}
- $('#card').classList.remove('on');mode=t=='store'?'store':'zone';zn=t=='store'?null:t;tabs(t);
- if(t=='store'){fly(new V(0,2.1,4.4),new V(0,1.7,0));C.enableRotate=C.enableZoom=true}
- else{const z=Z[t];z.zx=0;fly(z.g.localToWorld(new V(0,1.85,2.7)),z.g.localToWorld(new V(0,1.7,0)));C.enableRotate=C.enableZoom=false}}
-function fill(o){const p=o.userData.p,cs=LK.colors(p.colors),sz=(p.sizes??(p.type=='aksesoris'?'':'S/M/L/XL/XXL')).split('/').filter(Boolean);
- $('#k').textContent=p.type;$('#n').textContent=p.name;$('#p').textContent=rp(p.price);$('#l').textContent=cs[0].n;
- $('#sw').innerHTML=cs.map((c,i)=>`<i data-i="${i}" title="${esc(c.n)}" style="background:${c.h}" class="${i?'':'on'}"></i>`).join('');
- $('#sz').innerHTML=sz.map((s,i)=>`<button class="${i?'':'on'}">${esc(s)}</button>`).join('');$('#szt').hidden=!sz.length;
- $('#add').textContent='Add to cart';$('#add').className='';$('#vc').hidden=true;[...$('#vw').children].forEach((b,i)=>b.classList.toggle('on',!i))}
-function open(o){const p=o.userData.p,z=Z[p.type];sc.updateMatrixWorld(true);sel=o;mode='item';zn=p.type;ry=0;o.userData.g.rotation.y=0;
- Object.values(Z).forEach(q=>q.items.forEach(i=>fade(i,i===o?1:.22)));
- const top=o.userData.g.userData.top,x=o.userData.x,dn=innerWidth<700?-.5:0;
- fly(z.g.localToWorld(new V(x,1.8+dn*.5,1.9)),z.g.localToWorld(new V(x,2.31-top+dn,0)));C.enableRotate=C.enableZoom=true;tabs(p.type);fill(o);$('#card').classList.add('on')}
-const step=d=>{const L=Z[zn].items,i=L.indexOf(sel);open(L[(i+d+L.length)%L.length])};
-$('#nx').onclick=()=>step(1);$('#pv').onclick=()=>step(-1);$('#x').onclick=()=>go(zn);
-$('#nav').onclick=e=>{const b=e.target.closest('button[data-t]');if(b)go(b.dataset.t)};$('#i').onclick=()=>$('#tip').hidden=!$('#tip').hidden;
-$('#vw').onclick=e=>{const b=e.target.closest('button');if(!b)return;[...$('#vw').children].forEach(x=>x.classList.toggle('on',x==b));ry=+b.dataset.r};
-$('#sw').onclick=e=>{const i=e.target.closest('i');if(!i||!sel)return;const c=LK.colors(sel.userData.p.colors)[+i.dataset.i];sel.userData.ci=+i.dataset.i;LK.tint(sel.userData.g,c.h);[...$('#sw').children].forEach(x=>x.classList.toggle('on',x==i));$('#l').textContent=c.n};
-$('#sz').onclick=e=>{const b=e.target.closest('button');if(b)[...$('#sz').children].forEach(x=>x.classList.toggle('on',x==b))};
-const sv=()=>{try{localStorage.lkc=JSON.stringify(cart)}catch(e){}$('#ct').textContent=cart.length};
-$('#add').onclick=()=>{if(!sel)return;const p=sel.userData.p,s=$('#sz .on');cart.push({n:p.name,c:LK.colors(p.colors)[sel.userData.ci].n,s:s?s.textContent:'',pr:p.price,l:p.link||''});sv();$('#add').textContent='Added to cart ✓';$('#add').className='ok';$('#vc').hidden=false};
-const sheet=()=>{$('#cl2').innerHTML=cart.map(c=>`<div class="ci"><span>${esc(c.n)}<br><small>${esc(c.c)}${c.s?' · '+esc(c.s):''}</small></span><span>${rp(c.pr)}</span></div>`).join('')||'Keranjang kosong';$('#co').href=(cart.find(c=>c.l)||{l:MAIN}).l;$('#sheet').hidden=false};
-$('#cb').onclick=$('#vc').onclick=sheet;$('#cx').onclick=()=>$('#sheet').hidden=true;
-function zpan(dx){const z=Z[zn],m=(z.items.length-1)/2*z.sp,n=Math.max(-m,Math.min(m,z.zx+dx));dx=n-z.zx;z.zx=n;const d=new V(1,0,0).applyQuaternion(z.g.quaternion).multiplyScalar(dx);cam.position.add(d);C.target.add(d)}
-let dn=null;const cv=$('#c'),rc=new THREE.Raycaster();
-cv.onpointerdown=e=>dn={x:e.clientX,y:e.clientY,lx:e.clientX};
-cv.onpointermove=e=>{if(!dn)return;if(mode=='zone'&&!tw)zpan(-(e.clientX-dn.lx)*.006);dn.lx=e.clientX};
-cv.onpointerup=e=>{const d=dn;dn=null;if(!d||Math.hypot(e.clientX-d.x,e.clientY-d.y)>6)return;
- rc.setFromCamera({x:e.clientX/innerWidth*2-1,y:-e.clientY/innerHeight*2+1},cam);
- const h=rc.intersectObjects(Object.values(Z).flatMap(z=>z.items),true)[0];
- if(h){let o=h.object;while(o&&!o.userData.p)o=o.parent;if(o)return open(o)}if(mode=='item')go(zn)};
-cv.addEventListener('wheel',e=>{if(mode=='zone')zpan((e.deltaY+e.deltaX)*.003)},{passive:true});
-function size(){R.setSize(innerWidth,innerHeight);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()}addEventListener('resize',size);size();
-let lt='';R.setAnimationLoop(()=>{if(tw&&!tw())tw=null;
- for(const k in Z){const z=Z[k];z.items.forEach(o=>{let s=.62;if(mode=='zone'&&k==zn)s+=.14*Math.max(0,1-Math.abs(o.userData.x-z.zx)/.55);if(o===sel)s=1;o.scale.setScalar(o.scale.x+(s-o.scale.x)*.14);o.position.y=2.31-o.userData.g.userData.top*o.scale.x})}
- let n='';if(mode=='zone'){const z=Z[zn],o=z.items.find(o=>Math.abs(o.userData.x-z.zx)<.3);if(o)n=o.userData.p.name}
- if(n!=lt)$('#lab').textContent=lt=n;
- if(sel){const g=sel.userData.g;g.rotation.y+=Math.atan2(Math.sin(ry-g.rotation.y),Math.cos(ry-g.rotation.y))*.12}
- C.update();R.render(sc,cam)});
-(async()=>{try{if(location.hash=='#preview')P=JSON.parse(localStorage.lk||'[]')}catch(e){}
- if(!P.length)try{P=await(await fetch('products.json?'+Date.now())).json()}catch(e){}
- if(!P.length)['hoodie','kaos','aksesoris'].forEach(t=>['Hitam','Navy','Maroon','Abu','Cream','Hijau'].forEach((c,i)=>P.push({id:t+i,name:`Demo ${t} ${c}`,type:t,price:'150000',colors:c+'/Putih/Hitam'})));
- await build();$('#ct').textContent=cart.length})();
+<header><div class="brand">fvcktherules<small>3D SHOWROOM</small></div><button class="pill" id="bag">Tas <b id="n">0</b></button></header>
+<div id="empty" hidden>Belum ada produk di rak ini.<br>Atur dulu lewat admin3d.html</div>
+<aside id="card" hidden></aside><div id="sub" hidden></div><nav id="tabs"></nav>
+<div id="sheet"><div id="sb"></div></div><div id="toast"></div>
+<script type="module">
+import * as T from 'three';
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {build} from './models.js';
+import * as FB from 'https://fucktherules.my.id/firebase.js?v=20261030';
+import {collection,onSnapshot} from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"']/g,c=>'&#'+c.charCodeAt(0)+';'),rp=n=>'Rp '+n.toLocaleString('id-ID'),num=s=>+String(s||'').replace(/\D/g,'')||0,list=s=>String(s||'').split('/').map(x=>x.trim()).filter(Boolean),cl=(v,a,b)=>Math.min(b,Math.max(a,v));
+const RAIL=1.75,GAP=.85,PAY='Mandiri 1370023790229 · GoPay 081910421976 a.n. Dias Adhitya Purnama Putra';
+let P=[],A=[],D={},STK=[],items=[],G=[],tab='all',sub='',sel=null,tx=0,cx=0,maxX=0,pc='',ps='',busy=0;
+let cart=(()=>{try{return JSON.parse(localStorage.getItem('fvck3d.cart'))||[]}catch{return[]}})();
+const save=()=>{try{localStorage.setItem('fvck3d.cart',JSON.stringify(cart))}catch{}$('#n').textContent=cart.length};save();
+const toast=t=>{const e=$('#toast');e.textContent=t;e.classList.add('on');setTimeout(()=>e.classList.remove('on'),2200)};
+
+// ---------- scene ----------
+const cv=$('#c'),R=new T.WebGLRenderer({canvas:cv,antialias:true});R.setPixelRatio(Math.min(devicePixelRatio,2));R.toneMapping=T.ACESFilmicToneMapping;R.shadowMap.enabled=true;R.shadowMap.type=T.PCFSoftShadowMap;
+const S=new T.Scene();S.background=new T.Color('#eeece6');S.environment=new T.PMREMGenerator(R).fromScene(new RoomEnvironment(),.04).texture;
+const cam=new T.PerspectiveCamera(38,1,.1,60);cam.position.set(0,1.3,3.4);
+const sun=new T.DirectionalLight('#fff',1.8);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-6,right:6,top:4,bottom:-3,far:20});sun.shadow.bias=-.0004;S.add(sun,sun.target,new T.HemisphereLight('#fff','#ddd',.5));
+const M=(c,r,m=0)=>new T.MeshStandardMaterial({color:c,roughness:r,metalness:m});
+const fl=new T.Mesh(new T.PlaneGeometry(90,16),M('#d9d7d1',.3)),wl=new T.Mesh(new T.PlaneGeometry(90,7),M('#f5f4f0',.95)),rl=new T.Mesh(new T.CylinderGeometry(.012,.012,90,12),M('#c9ccd0',.25,1));
+fl.rotation.x=-Math.PI/2;fl.position.x=35;fl.receiveShadow=true;wl.position.set(35,3.5,-1);wl.receiveShadow=true;rl.rotation.z=Math.PI/2;rl.position.set(35,RAIL+.045,0);
+const sc=document.createElement('canvas');sc.width=1024;sc.height=160;const sx=sc.getContext('2d');sx.font='700 118px Inter,sans-serif';sx.fillStyle='#14130e';sx.textAlign='center';sx.fillText('FVCKTHERULES',512,120);
+const tex=new T.CanvasTexture(sc);tex.colorSpace=T.SRGBColorSpace;const sg=new T.Mesh(new T.PlaneGeometry(3.2,.5),new T.MeshBasicMaterial({map:tex,transparent:true}));sg.position.set(1,2.9,-.98);
+S.add(fl,wl,rl,sg);
+const dist=()=>sel?(innerWidth<640?1.75:1.6):(innerWidth<640?3.9:3.1);
+const rs=()=>{R.setSize(innerWidth,innerHeight,false);cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix()};addEventListener('resize',rs);rs();
+R.setAnimationLoop(t=>{cx+=(tx-cx)*.08;const ox=sel?(innerWidth<640?0:.28):0,ly=sel&&innerWidth<640?1.0:1.25;
+  cam.position.x=cx+ox;cam.position.y+=(ly+.05-cam.position.y)*.08;cam.position.z+=(dist()-cam.position.z)*.08;cam.lookAt(cx+ox,ly,0);
+  sun.position.set(cx+2,5,4);sun.target.position.set(cx,1,0);
+  G.forEach((g,i)=>{if(g!==sel){g.rotation.y*=.9;g.rotation.z=Math.sin(t/900+i)*.012}else g.rotation.z*=.9});R.render(S,cam)});
+
+// ---------- data (nyambung ke web utama) ----------
+function merge(){
+  items=[...P.map(p=>({...p,src:'produk'})),...A.map(p=>({...p,src:'aksesoris'}))].filter(p=>D[p.id]&&D[p.id].tampil!==false)
+   .map(p=>({...p,...D[p.id],id:p.id,price:num(p.harga),sizes:p.src=='aksesoris'?[]:list(p.stok),colors:list(p.warna),sold:p.badge=='sold'}))
+   .sort((a,b)=>(a.urut||0)-(b.urut||0));layout()}
+FB.listenProduk(l=>{P=l;merge()});FB.listenAksesoris(l=>{A=l;merge()},()=>{});FB.listenStok(l=>STK=l);
+onSnapshot(collection(FB.db,'produk3d'),s=>{D={};s.forEach(d=>D[d.id]=d.data());merge()},()=>toast('Gagal baca produk3d — publish firestore.rules dulu'));
+
+function layout(){
+  G.forEach(g=>S.remove(g));G=[];sel=null;$('#card').hidden=true;
+  const L=items.filter(i=>(tab=='all'||i.kategori==tab)&&(tab!='kaos'||!sub||i.subtipe==sub));
+  L.forEach((it,i)=>{const g=new T.Group();g.position.set(i*GAP,RAIL,0);g.userData.it=it;S.add(g);G.push(g);
+    build(it).then(m=>{if(it.sold)m.traverse(o=>o.material?.color?.multiplyScalar(.45));g.add(m)}).catch(e=>console.error(e))});
+  maxX=Math.max(0,(L.length-1)*GAP);tx=cl(tx,0,maxX);$('#empty').hidden=L.length>0}
+
+// ---------- tabs ----------
+function tabs(){const T4=[['all','Store'],['jaket','Jaket'],['kaos','Kaos'],['aksesoris','Aksesoris']];
+  $('#tabs').innerHTML=T4.map(([k,l])=>`<button class="pill ${tab==k?'on':''}" data-t="${k}">${l}</button>`).join('');
+  const s=$('#sub');s.hidden=tab!='kaos';s.innerHTML=[['','Semua'],['lengan-pendek','Lengan pendek'],['lengan-panjang','Lengan panjang']].map(([k,l])=>`<button class="pill ${sub==k?'on':''}" data-u="${k}">${l}</button>`).join('')}
+$('#tabs').onclick=e=>{const b=e.target.closest('[data-t]');if(b){tab=b.dataset.t;sub='';tx=0;tabs();layout()}};
+$('#sub').onclick=e=>{const b=e.target.closest('[data-u]');if(b){sub=b.dataset.u;tx=0;tabs();layout()}};tabs();
+
+// ---------- interaksi ----------
+let drag=null;const ray=new T.Raycaster();
+cv.onpointerdown=e=>{drag={x:e.clientX,m:0};cv.setPointerCapture(e.pointerId)};
+cv.onpointermove=e=>{if(!drag)return;const dx=e.clientX-drag.x;drag.x=e.clientX;drag.m+=Math.abs(dx);if(sel)sel.rotation.y+=dx*.01;else tx=cl(tx-dx*.006*(dist()/3),0,maxX)};
+cv.onpointerup=e=>{if(drag&&drag.m<6){ray.setFromCamera(new T.Vector2(e.clientX/innerWidth*2-1,-(e.clientY/innerHeight)*2+1),cam);
+  const h=ray.intersectObjects(G,true)[0];let o=h?.object;while(o&&!o.userData.it)o=o.parent;if(o)pick(o);else{sel=null;$('#card').hidden=true}}drag=null};
+cv.onwheel=e=>{tx=cl(tx+e.deltaY*.003,0,maxX)};
+function pick(g){sel=g;tx=g.position.x;const it=g.userData.it;pc=it.colors[0]||'-';ps='';card(it)}
+function card(it){const c=$('#card');c.hidden=false;
+  c.innerHTML=`<small>${esc(it.kategori)}${it.subtipe?' · '+esc(it.subtipe.replace(/-/g,' ')):''}</small><h3>${esc(it.nama)}</h3><b>${rp(it.price)}</b> <span class="bd">${esc({pre:'PRE ORDER',ready:'READY',sold:'SOLD OUT'}[it.badge]||it.status||'')}</span>
+  ${it.colors.length>1?`<div class="sz">${it.colors.map(x=>`<button data-c="${esc(x)}" class="${x==pc?'on':''}">${esc(x)}</button>`).join('')}</div>`:`<p><small>${esc(it.warna||'')}</small></p>`}
+  ${it.sizes.length?`<small>Pilih ukuran</small><div class="sz">${it.sizes.map(x=>`<button data-s="${esc(x)}" class="${x==ps?'on':''}">${esc(x)}</button>`).join('')}</div>`:''}
+  <button class="add" ${it.sold?'disabled':''}>${it.sold?'Sold out':'Add to Cart'}</button><p><small>Drag untuk memutar produk · klik area kosong untuk kembali</small></p>`;
+  c.onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.c){pc=b.dataset.c;card(it)}else if(b.dataset.s){ps=b.dataset.s;card(it)}else if(b.classList.contains('add')){
+    if(it.sizes.length&&!ps)return toast('Pilih ukuran dulu');
+    cart.push({id:it.id,nama:it.nama,warna:pc||'-',size:ps||'-',harga:it.price,src:it.src,badge:it.badge,kodePrefix:it.kodePrefix||'',dpAllowed:it.dpAllowed||''});save();
+    b.textContent='Added to cart ✓';b.classList.add('ok');setTimeout(()=>{b.textContent='Add to Cart';b.classList.remove('ok')},1400)}}}
+
+// ---------- tas & checkout (alur sama dengan web utama: bayar -> bukti -> saveOrder 'pending') ----------
+const sh=$('#sheet'),sb=$('#sb');
+$('#bag').onclick=()=>{bag();sh.classList.add('on')};
+function bag(){const sub=cart.reduce((a,c)=>a+c.harga,0);
+  sb.innerHTML=`<h3>Tas (${cart.length})</h3>`+(cart.length?cart.map((c,i)=>`<div class="ln"><span>${esc(c.nama)}<small>${esc(c.warna)} · ${esc(c.size)}</small></span><b>${rp(c.harga)}</b><button data-x="${i}">✕</button></div>`).join('')+
+  `<p><b>Subtotal ${rp(sub)}</b><br><small>Ongkir dikonfirmasi admin lewat WhatsApp setelah pesanan masuk.</small></p>
+  <input id="f1" placeholder="Nama"><input id="f2" placeholder="No. WhatsApp" inputmode="tel"><input id="f3" placeholder="Email" type="email"><input id="f4" placeholder="Alamat lengkap, kota, kode pos">
+  <p><small>Bayar ke: ${PAY}<br><a href="https://fucktherules.my.id/qris.jpg" target="_blank">Buka QRIS</a> · lalu upload bukti bayar:</small></p><input id="f5" type="file" accept="image/*">
+  <p class="er" id="er"></p><button class="add" id="go">Kirim pesanan</button>`:'<p>Tas kosong.</p>')+`<p><button class="pill" id="cx">Tutup</button></p>`}
+sh.onclick=async e=>{
+  if(e.target===sh||e.target.id=='cx')return sh.classList.remove('on');
+  const x=e.target.dataset?.x;if(x!==undefined){cart.splice(+x,1);save();return bag()}
+  if(e.target.id!='go'||busy)return;const er=$('#er'),v=i=>$('#f'+i).value.trim(),file=$('#f5').files[0];
+  if(v(1).length<2||num(v(2)).toString().length<9||!/@/.test(v(3))||v(4).length<12)return er.textContent='Lengkapi nama, WhatsApp, email, dan alamat.';
+  if(!file)return er.textContent='Upload bukti bayar dulu.';
+  busy=1;e.target.disabled=true;e.target.textContent='Mengirim…';er.textContent='';
+  try{
+    const url=await FB.uploadGambar(file,'bukti');if(!url)throw new Error('Gagal upload bukti, coba lagi.');
+    const sub=cart.reduce((a,c)=>a+c.harga,0),flat=cart.map(c=>({nama:c.nama,warna:c.warna,size:c.size,harga:c.harga,tambahan:'',...(c.src=='aksesoris'?{jenis:'aksesoris'}:{})})),pre=cart.filter(c=>c.badge=='pre');
+    const o={nama:v(1),wa:v(2),email:v(3),customerUid:null,alamat:v(4),produk:flat,produkText:flat.map(i=>i.jenis=='aksesoris'?i.nama:`${i.nama} (${i.warna}|${i.size})`).join(', '),
+      hargaKaos:sub,ongkir:0,voucherKode:'',voucherDeskripsi:'',totalAkhir:sub,tipeBayar:'Cek Bukti Bayar',dp:'',buktiURL:url,dpEligible:cart.some(c=>c.dpAllowed!='no'),
+      kodePrefix:(cart.find(c=>c.kodePrefix)||{}).kodePrefix||'',isPO:pre.length>0,poIds:[...new Set(pre.map(c=>c.id))],poNames:[...new Set(pre.map(c=>c.nama))],sumber:'3d-showroom'};
+    const tr=cart.filter(c=>c.src=='produk'&&STK.some(s=>s.pid==c.id));
+    if(tr.length&&FB.kurangiStok)try{o.stokItems=await FB.kurangiStok(tr.map(c=>({pid:c.id,warna:c.warna,size:c.size})))}catch(err){if(err?.code=='STOK_HABIS'){const h=err.habis?.[0]||{};throw new Error(`Stok ${h.warna||''} ${h.size||''} habis/kurang. Hapus dari tas dulu.`)}throw err}
+    const id=await FB.saveOrder(o);if(!id)throw new Error('Gagal menyimpan pesanan.');
+    cart=[];save();sb.innerHTML=`<h3>Pesanan terkirim ✓</h3><p>ID pemesanan:<br><b style="font-size:20px">${esc(o.kodePelunasan||id)}</b></p><p>Status: menunggu verifikasi admin. Cek di Pantau Pesanan web utama.</p><button class="pill" id="cx">Tutup</button>`;
+  }catch(err){er.textContent=err.message||'Terjadi kesalahan.';e.target.disabled=false;e.target.textContent='Kirim pesanan'}
+  busy=0};
 </script></body></html>
