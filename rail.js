@@ -21,8 +21,30 @@ function clothShape(type){const g=new THREE.Group(),hood=type==='hoodie',tee=typ
  return g;
 }
 function disposeGarment(){if(garment){rail.remove(garment);garment.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material){if(Array.isArray(o.material))o.material.forEach(m=>m.dispose());else o.material.dispose()}})}}
-function rebuild(){disposeGarment();const type=(selected?.type||'tee').toLowerCase();garment=clothShape(type);garment.rotation.y=turnTarget;rail.add(garment);applyColor(garmentColor);if(selected?.textures){loadTexture(selected.textures.front,'front');loadTexture(selected.textures.back,'back')}}
+function rebuild(){disposeGarment();const type=(selected?.type||'tee').toLowerCase();garment=clothShape(type);garment.rotation.y=turnTarget;rail.add(garment);applyColor(garmentColor);if(selected?.textures?.atlas){loadAtlas(selected.textures.atlas)}else if(selected?.textures){loadTexture(selected.textures.front,'front');loadTexture(selected.textures.back,'back')}}
 function applyColor(c){garmentColor=c;document.querySelector('#colorLabel').textContent=({ '#181818':'BLACK','#f0eee8':'OFF WHITE','#183b87':'BLUE','#9d171b':'RED','#6e7562':'OLIVE','#b9b6ad':'GREY'})[c]||'CUSTOM';if(garment)garment.traverse(o=>{if(o.isMesh&&o.material&&o.material.color&&o.geometry.type!=='TorusGeometry'&&o.geometry.type!=='PlaneGeometry')o.material.color.set(c)})}
+
+function loadAtlas(url){
+ if(!url||!garment)return;
+ new THREE.TextureLoader().load(url,texture=>{
+  texture.colorSpace=THREE.SRGBColorSpace;
+  const image=texture.image;
+  const regions={front:[0,0],back:[1,0],left:[0,1],right:[1,1]};
+  for(const [side,[col,row]] of Object.entries(regions)){
+   const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.floor(image.width/2));canvas.height=Math.max(1,Math.floor(image.height/2));
+   const ctx=canvas.getContext('2d');ctx.drawImage(image,col*canvas.width,row*canvas.height,canvas.width,canvas.height,0,0,canvas.width,canvas.height);
+   const crop=new THREE.CanvasTexture(canvas);crop.colorSpace=THREE.SRGBColorSpace;crop.needsUpdate=true;
+   const material=new THREE.MeshStandardMaterial({map:crop,roughness:.88,side:THREE.DoubleSide});
+   const w=side==='left'||side==='right'?.35:.92;const h=side==='left'||side==='right'?.72:1.55;
+   const panel=new THREE.Mesh(new THREE.PlaneGeometry(w,h),material);
+   if(side==='front')panel.position.set(0,-.02,.151);
+   if(side==='back'){panel.position.set(0,-.02,-.151);panel.rotation.y=Math.PI;}
+   if(side==='left'){panel.position.set(-.62,.05,0);panel.rotation.y=-Math.PI/2;panel.rotation.z=.25;}
+   if(side==='right'){panel.position.set(.62,.05,0);panel.rotation.y=Math.PI/2;panel.rotation.z=-.25;}
+   panel.userData.textureSide=side;garment.add(panel);
+  }
+ });
+}
 function loadTexture(url,side){if(!url||!garment)return;new THREE.TextureLoader().load(url,t=>{t.colorSpace=THREE.SRGBColorSpace;t.flipY=true;const material=new THREE.MeshStandardMaterial({map:t,transparent:true,alphaTest:.04,roughness:.88,side:THREE.DoubleSide});const panel=new THREE.Mesh(new THREE.PlaneGeometry(.92,1.55),material);panel.position.set(0,-.02,side==='back' ? -.145 : .145);if(side==='back')panel.rotation.y=Math.PI;panel.userData.textureSide=side;garment.add(panel)})}
 function setView(v){const map={front:0,back:Math.PI,left:-Math.PI/2,right:Math.PI/2};turnTarget=map[v]??0;if(garment)garment.rotation.y=turnTarget;document.querySelectorAll('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v))}
 document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));document.querySelector('#resetView').onclick=()=>{rotX=0;setView('front')};
@@ -32,5 +54,5 @@ function thumb(){return `<svg viewBox="0 0 100 100" aria-hidden="true"><path d="
 function renderProducts(){const root=document.querySelector('#productList');document.querySelector('#pieceCount').textContent=String(products.length).padStart(2,'0')+' PIECES';if(!products.length){root.innerHTML='<div class="empty">Belum ada produk yang dipublikasikan di RAIL. Admin dapat menambahkan produk dari katalog toko utama.</div>';return}root.innerHTML=products.map((p,i)=>`<button class="product-card ${p.id===selected?.id?'selected':''}" data-id="${p.id}"><div class="product-thumb">${thumb()}</div><b>${escapeHtml(p.name||p.nama||'Untitled piece')}</b><small>${escapeHtml((p.type||'TEE').toUpperCase())} / ${String(i+1).padStart(2,'0')}</small></button>`).join('');root.querySelectorAll('.product-card').forEach(b=>b.onclick=()=>choose(products.find(p=>p.id===b.dataset.id)))}
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function choose(p){selected=p;document.querySelector('#pieceName').textContent=(p.name||p.nama||'CUSTOM PIECE').toUpperCase();document.querySelector('#pieceNo').textContent='PIECE '+String(products.indexOf(p)+1).padStart(2,'0');renderProducts();rebuild()}
-async function init(){try{const snap=await getDocs(collection(db,'railDesigns'));products=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.published!==false);if(!products.length){const ps=await getDocs(collection(db,'produk'));products=ps.docs.map(d=>({id:d.id,name:d.data().nama,type:'tee',sourceId:d.id,price:d.data().harga,thumbnail:d.data().thumbnail})).slice(0,12)}if(products.length)choose(products[0]);else renderProducts()}catch(e){console.warn(e);document.querySelector('#productList').innerHTML='<div class="empty">Katalog belum dapat dimuat. Periksa koneksi Firebase dan Firestore Rules.</div>'}}
+async function init(){try{const snap=await getDocs(collection(db,'rail'));products=snap.docs.map(d=>({id:d.id,...d.data()})).filter(p=>p.published!==false);if(!products.length){const ps=await getDocs(collection(db,'produk'));products=ps.docs.map(d=>({id:d.id,name:d.data().nama,type:'tee',sourceId:d.id,price:d.data().harga,thumbnail:d.data().thumbnail})).slice(0,12)}if(products.length)choose(products[0]);else renderProducts()}catch(e){console.warn(e);document.querySelector('#productList').innerHTML='<div class="empty">Katalog belum dapat dimuat. Periksa koneksi Firebase dan Firestore Rules.</div>'}}
 function resize(){const w=sceneHost.clientWidth,h=sceneHost.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(sceneHost);resize();function animate(){requestAnimationFrame(animate);if(garment&&!dragging){const diff=turnTarget-garment.rotation.y;if(Math.abs(diff)>.01)garment.rotation.y+=diff*.08;}renderer.render(scene,camera)}animate();init();

@@ -1,55 +1,39 @@
 # RAIL — FVCKTHERULES Virtual Locker Room
 
-Standalone static site intended for `rail.fucktherules.my.id`. It uses the existing Firebase project `fvcktherules-store` and reads products from `produk` and RAIL designs from `railDesigns`.
+Static site for `rail.fucktherules.my.id`. Uses the existing Firebase project `fvcktherules-store`, reads the main store catalog from `produk`, stores RAIL presentation settings in `rail`, and uploads images to Cloudinary. Firebase Storage is not used by this project.
 
 ## Deploy
-1. Create a new GitHub repository for the RAIL site.
-2. Upload the CONTENTS of this folder to the repository root (not the parent project folder).
-3. Enable GitHub Pages from the main branch/root.
-4. Add custom domain `rail.fucktherules.my.id` in GitHub Pages and configure the DNS CNAME as GitHub instructs.
-5. In Firebase Authentication, add `rail.fucktherules.my.id` to Authorized domains.
+1. Upload the contents of this folder to the root of a dedicated GitHub repository.
+2. Enable GitHub Pages from the main branch/root.
+3. Add custom domain `rail.fucktherules.my.id` in GitHub Pages and configure DNS as GitHub instructs.
+4. In Firebase Authentication, add `rail.fucktherules.my.id` to Authorized domains.
 
-## Firebase setup required
-### Firestore rules
-Add this match inside `match /databases/{database}/documents` before the final closing braces. Keep the existing `isAdmin()` function and admin allowlist intact:
+## Firestore Rules
+Your existing rules already include the required collection rule. Keep your complete existing rules and all other store rules intact:
 
 ```javascript
-match /railDesigns/{designId} {
+match /rail/{document=**} {
   allow read: if true;
-  allow create, update, delete: if isAdmin();
+  allow write: if isAdmin();
 }
 ```
 
-### Firebase Storage rules
-In Firebase Console > Storage > Rules, add an equivalent rule for `rail-textures`. Keep existing rules intact and merge carefully:
+The `isAdmin()` function must keep your existing email allowlist. The admin emails must be registered in Firebase Authentication. This project does not require a `railDesigns` collection or Firebase Storage rules.
 
-```javascript
-rules_version = '2';
-service firebase.storage {
-  match /b/{bucket}/o {
-    function isAdmin() {
-      return request.auth != null
-        && request.auth.token.email in [
-          'diasadhityap@gmail.com',
-          'fvcktherules3404@gmail.com'
-        ];
-    }
-    match /rail-textures/{allPaths=**} {
-      allow read: if true;
-      allow write: if isAdmin()
-        && request.resource.size < 8 * 1024 * 1024
-        && request.resource.contentType.matches('image/(png|jpeg|webp)');
-    }
-  }
-}
-```
-If Storage already has rules, merge this match into the existing service rather than replacing unrelated rules.
+## Cloudinary setup
+1. In Cloudinary, use the existing Cloud Name and an **unsigned upload preset**. Restrict the preset to image uploads and suitable file sizes/formats.
+2. Open `admin.html`, sign in with an allowlisted Firebase admin account, enter Cloud Name and Upload Preset, then click **SAVE CLOUDINARY CONFIG**. These two values are saved in that browser's local storage, not Firestore.
+3. Upload PNG, JPG, or WebP images up to 8 MB. Never put a Cloudinary API Secret in frontend code.
 
-## Important notes
-- Admin uses Firebase Email/Password login and the same admin email allowlist as the store rules.
-- Admin picks an existing product from the store's `produk` collection and saves a RAIL presentation document to `railDesigns`.
-- The source product is referenced by `sourceId`; this does not copy or alter checkout/order data.
-- Uploaded textures are stored in Firebase Storage. Keep images under 8 MB.
-- `assets/templates/rail-texture-template-2048.png` is a 2048x2048 guide sheet with four labeled art areas. It is a layout guide, not a ready-to-use UV atlas. Current front/back upload inputs are stored on the design record; advanced per-panel UV mapping and realistic garment topology are a next development step.
-- The included 3D garment is a lightweight procedural preview built with Three.js, with rotation and front/back/left/right camera presets. It is a working prototype, not yet a photorealistic cloth simulation or exact branded garment mesh.
-- Static hosting needs internet access to load Three.js and Firebase modules from their CDNs.
+## Data flow
+- Admin selects a product from the main `produk` collection.
+- RAIL settings are saved to `rail/{sourceProductId}`.
+- Image URLs from Cloudinary are saved under `textures.front`, `textures.back`, `textures.left`, and `textures.right`.
+- Main product, checkout, order, and stock data are not modified.
+
+## Prototype limitations
+The included garment is a lightweight procedural Three.js preview. The template at `assets/templates/rail-texture-template-2048.png` is a layout guide, not a ready-made UV atlas. Per-panel UV mapping and realistic garment meshes for each product type remain further development work.
+
+
+## Single atlas workflow
+Admin uses one 2048×2048 atlas image, divided into four equal quadrants: FRONT (top-left), BACK (top-right), LEFT SIDE (bottom-left), RIGHT SIDE (bottom-right). Download `assets/templates/rail-single-atlas-template-2048.png`, place artwork in those areas, and upload one image. The public viewer crops each quadrant for its preview surfaces.
